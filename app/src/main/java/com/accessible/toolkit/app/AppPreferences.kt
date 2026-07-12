@@ -18,6 +18,12 @@ class AppPreferences(context: Context) {
         private const val KEY_BRIDGE_PORT = "bridge_port"
         private const val KEY_ENABLE_VIBRATE = "enable_vibrate"
         private const val KEY_ENABLE_TTS_ALERT = "enable_tts_alert"
+        private const val KEY_SUBTITLE_OPACITY = "subtitle_opacity"
+        private const val KEY_SUBTITLE_MAX_LINES = "subtitle_max_lines"
+        private const val KEY_SUBTITLE_HISTORY_ENABLED = "subtitle_history_enabled"
+        private const val KEY_VAD_SILENCE_TIMEOUT = "vad_silence_timeout"
+        private const val KEY_ENABLE_ONE_TAP_CALL = "enable_one_tap_call"
+        private const val KEY_TALKBACK_SYNC = "talkback_sync"
 
         const val DEFAULT_VAD_THRESHOLD = 3.0f
         const val DEFAULT_TTS_SPEED = 1.0f
@@ -72,4 +78,28 @@ class AppPreferences(context: Context) {
     var privacyIntroVersion: Int
         get() = prefs.getInt(KEY_PRIVACY_INTRO_VERSION, 0)
         set(value) = prefs.edit().putInt(KEY_PRIVACY_INTRO_VERSION, value).apply()
+
+    var subtitleOpacity: Int
+        get() = prefs.getInt(KEY_SUBTITLE_OPACITY, 90)
+        set(value) = prefs.edit().putInt(KEY_SUBTITLE_OPACITY, value).apply()
+
+    var subtitleMaxLines: Int
+        get() = prefs.getInt(KEY_SUBTITLE_MAX_LINES, 3)
+        set(value) = prefs.edit().putInt(KEY_SUBTITLE_MAX_LINES, value).apply()
+
+    var subtitleHistoryEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SUBTITLE_HISTORY_ENABLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_SUBTITLE_HISTORY_ENABLED, value).apply()
+
+    var vadSilenceTimeoutMs: Long
+        get() = prefs.getLong(KEY_VAD_SILENCE_TIMEOUT, 2000L)
+        set(value) = prefs.edit().putLong(KEY_VAD_SILENCE_TIMEOUT, value).apply()
+
+    var enableOneTapCall: Boolean
+        get() = prefs.getBoolean(KEY_ENABLE_ONE_TAP_CALL, true)
+        set(value) = prefs.edit().putBoolean(KEY_ENABLE_ONE_TAP_CALL, value).apply()
+
+    var enableTalkBackSync: Boolean
+        get() = prefs.getBoolean(KEY_TALKBACK_SYNC, true)
+        set(value) = prefs.edit().putBoolean(KEY_TALKBACK_SYNC, value).apply()
 }

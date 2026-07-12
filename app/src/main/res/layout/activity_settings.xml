@@ -22,230 +22,189 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="VAD 灵敏度"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/elder_text_primary"
-                android:layout_marginBottom="8dp" />
+            <!-- ===== 字幕设置 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="字幕设置" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
-
-                <SeekBar
-                    android:id="@+id/seekbar_vad_threshold"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/tv_vad_threshold_value"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    android:text="3.0x"
-                    android:textSize="14sp"
-                    android:gravity="center" />
-
+            <TextView style="@style/SettingsLabel" android:text="字体大小" />
+            <LinearLayout style="@style/SettingsRow">
+                <SeekBar android:id="@+id/seekbar_subtitle_font"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:max="36" android:progress="24" />
+                <TextView android:id="@+id/tv_subtitle_font_value"
+                    android:layout_width="50dp" android:layout_height="wrap_content"
+                    android:text="24sp" android:gravity="center" android:textSize="14sp" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TTS 语速"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/elder_text_primary"
-                android:layout_marginBottom="8dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
-
-                <SeekBar
-                    android:id="@+id/seekbar_tts_speed"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/tv_tts_speed_value"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    android:text="1.0x"
-                    android:textSize="14sp"
-                    android:gravity="center" />
-
+            <TextView style="@style/SettingsLabel" android:text="悬浮窗透明度" />
+            <LinearLayout style="@style/SettingsRow">
+                <SeekBar android:id="@+id/seekbar_subtitle_opacity"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:max="100" android:progress="90" />
+                <TextView android:id="@+id/tv_subtitle_opacity_value"
+                    android:layout_width="50dp" android:layout_height="wrap_content"
+                    android:text="90%" android:gravity="center" android:textSize="14sp" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TTS 音调"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/elder_text_primary"
-                android:layout_marginBottom="8dp" />
+            <TextView style="@style/SettingsLabel" android:text="字幕最大行数" />
+            <Spinner android:id="@+id/spinner_max_lines"
+                android:layout_width="match_parent" android:layout_height="48dp"
+                android:layout_marginBottom="12dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
-
-                <SeekBar
-                    android:id="@+id/seekbar_tts_pitch"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/tv_tts_pitch_value"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    android:text="1.0"
-                    android:textSize="14sp"
-                    android:gravity="center" />
-
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel" android:text="字幕历史记录" />
+                <Switch android:id="@+id/switch_history" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="字幕字体大小"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/elder_text_primary"
-                android:layout_marginBottom="8dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
-
-                <SeekBar
-                    android:id="@+id/seekbar_subtitle_font"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:max="60" />
-
-                <TextView
-                    android:id="@+id/tv_subtitle_font_value"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    android:text="24sp"
-                    android:textSize="14sp"
-                    android:gravity="center" />
-
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel" android:text="语种（暂仅中文）" />
+                <Spinner android:id="@+id/spinner_language"
+                    android:layout_width="120dp" android:layout_height="40dp" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="跨设备端口"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/elder_text_primary"
-                android:layout_marginBottom="8dp" />
+            <!-- ===== VAD 设置 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="VAD 设置" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
-
-                <SeekBar
-                    android:id="@+id/seekbar_bridge_port"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:max="9000" />
-
-                <TextView
-                    android:id="@+id/tv_bridge_port_value"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    android:text="8765"
-                    android:textSize="14sp"
-                    android:gravity="center" />
-
+            <TextView style="@style/SettingsLabel" android:text="人声检测灵敏度" />
+            <LinearLayout style="@style/SettingsRow">
+                <SeekBar android:id="@+id/seekbar_vad_threshold"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:max="100" />
+                <TextView android:id="@+id/tv_vad_threshold_value"
+                    android:layout_width="50dp" android:layout_height="wrap_content"
+                    android:text="3.0x" android:gravity="center" android:textSize="14sp" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="提醒设置"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/elder_text_primary"
-                android:layout_marginBottom="8dp" />
+            <TextView style="@style/SettingsLabel" android:text="静音超时时长" />
+            <Spinner android:id="@+id/spinner_silence_timeout"
+                android:layout_width="match_parent" android:layout_height="48dp"
+                android:layout_marginBottom="12dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
+            <!-- ===== TTS 设置 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="TTS 设置" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="震动提醒"
-                    android:textSize="16sp"
-                    android:textColor="@color/elder_text_primary" />
-
-                <Switch
-                    android:id="@+id/switch_vibrate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
+            <TextView style="@style/SettingsLabel" android:text="默认语速" />
+            <LinearLayout style="@style/SettingsRow">
+                <SeekBar android:id="@+id/seekbar_tts_speed"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:max="100" android:progress="50" />
+                <TextView android:id="@+id/tv_tts_speed_value"
+                    android:layout_width="50dp" android:layout_height="wrap_content"
+                    android:text="1.0x" android:gravity="center" android:textSize="14sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="语音播报告警"
-                    android:textSize="16sp"
-                    android:textColor="@color/elder_text_primary" />
-
-                <Switch
-                    android:id="@+id/switch_tts_alert"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
+            <TextView style="@style/SettingsLabel" android:text="默认音调" />
+            <LinearLayout style="@style/SettingsRow">
+                <SeekBar android:id="@+id/seekbar_tts_pitch"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:max="100" android:progress="50" />
+                <TextView android:id="@+id/tv_tts_pitch_value"
+                    android:layout_width="50dp" android:layout_height="wrap_content"
+                    android:text="1.0" android:gravity="center" android:textSize="14sp" />
             </LinearLayout>
 
-            <Button
-                android:id="@+id/btn_show_privacy"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/elder_button_height"
-                android:text="查看隐私政策"
-                android:textSize="16sp" />
+            <TextView style="@style/SettingsLabel" android:text="TTS 引擎" />
+            <Spinner android:id="@+id/spinner_tts_engine"
+                android:layout_width="match_parent" android:layout_height="48dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- ===== 跨设备设置 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="跨设备字幕" />
+
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel" android:text="PC 字幕服务" />
+                <Switch android:id="@+id/switch_bridge" />
+            </LinearLayout>
+
+            <TextView style="@style/SettingsLabel" android:text="端口号" />
+            <LinearLayout style="@style/SettingsRow">
+                <SeekBar android:id="@+id/seekbar_bridge_port"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:max="9000" />
+                <TextView android:id="@+id/tv_bridge_port_value"
+                    android:layout_width="50dp" android:layout_height="wrap_content"
+                    android:text="8765" android:gravity="center" android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel"
+                    android:text="当前 IP" android:layout_width="0dp" android:layout_weight="1" />
+                <TextView android:id="@+id/tv_current_ip"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="未连接" android:textSize="14sp" android:textColor="#999" />
+            </LinearLayout>
+
+            <!-- ===== 老年辅助 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="老年辅助" />
+
+            <Button android:id="@+id/btn_medication_manager"
+                android:layout_width="match_parent" android:layout_height="52dp"
+                android:text="服药提醒管理" android:textSize="16sp"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="@color/elder_button_background" />
+            <Button android:id="@+id/btn_emergency_contacts"
+                android:layout_width="match_parent" android:layout_height="52dp"
+                android:text="紧急联系人设置" android:textSize="16sp"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="@color/elder_button_background" />
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel" android:text="一键呼叫开关" />
+                <Switch android:id="@+id/switch_one_tap_call" />
+            </LinearLayout>
+
+            <!-- ===== 快捷短语 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="快捷短语" />
+
+            <Button android:id="@+id/btn_edit_phrases"
+                android:layout_width="match_parent" android:layout_height="52dp"
+                android:text="编辑常用短语" android:textSize="16sp"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="@color/elder_button_background" />
+            <TextView android:id="@+id/tv_phrases_preview"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="" android:textSize="13sp" android:textColor="#999"
+                android:padding="8dp" android:layout_marginBottom="12dp" />
+
+            <!-- ===== 提醒 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="提醒设置" />
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel" android:text="震动提醒" />
+                <Switch android:id="@+id/switch_vibrate" />
+            </LinearLayout>
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel" android:text="语音播报告警" />
+                <Switch android:id="@+id/switch_tts_alert" />
+            </LinearLayout>
+
+            <!-- ===== 无障碍服务 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="无障碍服务" />
+            <Button android:id="@+id/btn_accessibility_settings"
+                android:layout_width="match_parent" android:layout_height="52dp"
+                android:text="系统无障碍设置" android:textSize="16sp"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="@color/elder_primary_dark" />
+            <LinearLayout style="@style/SettingsRow">
+                <TextView style="@style/SettingsSwitchLabel" android:text="TalkBack 协同朗读" />
+                <Switch android:id="@+id/switch_talkback_sync" />
+            </LinearLayout>
+
+            <!-- ===== 关于 ===== -->
+            <TextView style="@style/SettingsSectionTitle" android:text="关于" />
+
+            <TextView android:id="@+id/tv_version"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textSize="15sp" android:textColor="#666" android:padding="8dp"
+                android:gravity="center" />
+            <TextView android:id="@+id/tv_license"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Apache License 2.0" android:textSize="14sp"
+                android:textColor="#4A90D9" android:gravity="center"
+                android:padding="8dp" android:clickable="true" android:focusable="true" />
+            <Button android:id="@+id/btn_show_privacy"
+                android:layout_width="match_parent" android:layout_height="52dp"
+                android:text="查看隐私政策" android:textSize="16sp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/elder_button_background" />
 
         </LinearLayout>
-
     </ScrollView>
-
 </LinearLayout>

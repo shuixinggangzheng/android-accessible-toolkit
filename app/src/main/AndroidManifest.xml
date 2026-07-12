@@ -54,6 +54,10 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <receiver
+            android:name=".NotificationActionReceiver"
+            android:exported="false" />
+
     </application>
 
 </manifest>
