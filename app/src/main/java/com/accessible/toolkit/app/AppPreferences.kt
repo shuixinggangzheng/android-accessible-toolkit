@@ -24,6 +24,10 @@ class AppPreferences(context: Context) {
         private const val KEY_VAD_SILENCE_TIMEOUT = "vad_silence_timeout"
         private const val KEY_ENABLE_ONE_TAP_CALL = "enable_one_tap_call"
         private const val KEY_TALKBACK_SYNC = "talkback_sync"
+        private const val KEY_MODULE_SUBTITLE = "module_subtitle"
+        private const val KEY_MODULE_TTS = "module_tts"
+        private const val KEY_MODULE_BRIDGE = "module_bridge"
+        private const val KEY_MODULE_ELDER = "module_elder"
 
         const val DEFAULT_VAD_THRESHOLD = 3.0f
         const val DEFAULT_TTS_SPEED = 1.0f
@@ -102,4 +106,20 @@ class AppPreferences(context: Context) {
     var enableTalkBackSync: Boolean
         get() = prefs.getBoolean(KEY_TALKBACK_SYNC, true)
         set(value) = prefs.edit().putBoolean(KEY_TALKBACK_SYNC, value).apply()
+
+    var moduleSubtitleEnabled: Boolean
+        get() = prefs.getBoolean(KEY_MODULE_SUBTITLE, true)
+        set(value) = prefs.edit().putBoolean(KEY_MODULE_SUBTITLE, value).apply()
+
+    var moduleTtsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_MODULE_TTS, true)
+        set(value) = prefs.edit().putBoolean(KEY_MODULE_TTS, value).apply()
+
+    var moduleBridgeEnabled: Boolean
+        get() = prefs.getBoolean(KEY_MODULE_BRIDGE, true)
+        set(value) = prefs.edit().putBoolean(KEY_MODULE_BRIDGE, value).apply()
+
+    var moduleElderEnabled: Boolean
+        get() = prefs.getBoolean(KEY_MODULE_ELDER, true)
+        set(value) = prefs.edit().putBoolean(KEY_MODULE_ELDER, value).apply()
 }

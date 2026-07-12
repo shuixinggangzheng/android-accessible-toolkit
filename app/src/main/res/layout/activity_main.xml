@@ -1,133 +1,341 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/elder_background">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scroll_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/elder_padding_large"
-        android:gravity="center">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="无障碍辅助工具"
-            android:textSize="@dimen/elder_text_size_title"
-            android:textStyle="bold"
-            android:textColor="@color/elder_text_primary"
-            android:layout_marginBottom="@dimen/elder_padding_xlarge"
-            android:contentDescription="应用标题：无障碍辅助工具" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <Button
-            android:id="@+id/btn_subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="听障字幕"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_medium"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:contentDescription="点击开启或关闭听障字幕功能"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text" />
+            <!-- ===== 状态卡片区 ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="20dp">
 
-        <Button
-            android:id="@+id/btn_voice_assist"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="语障辅助"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_medium"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:contentDescription="点击打开语障辅助功能"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text" />
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    app:cardElevation="2dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardBackgroundColor="@color/elder_surface">
 
-        <Button
-            android:id="@+id/btn_voice_output"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="文字转语音"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_medium"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:contentDescription="点击打开文字转语音功能"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp">
 
-        <Button
-            android:id="@+id/btn_communication"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="双向沟通"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_medium"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:contentDescription="点击打开双向沟通功能"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text" />
+                        <TextView
+                            android:id="@+id/tv_card_subtitle_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="字幕"
+                            android:textSize="11sp"
+                            android:textColor="#999"
+                            android:layout_marginBottom="4dp" />
 
-        <Button
-            android:id="@+id/btn_medication_reminder"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="服药提醒"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_medium"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:contentDescription="点击打开服药提醒功能"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text" />
+                        <View
+                            android:id="@+id/dot_subtitle"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:background="@drawable/bg_circle_green"
+                            android:layout_marginBottom="4dp"
+                            android:visibility="gone" />
 
-        <Button
-            android:id="@+id/btn_emergency_call"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="一键呼叫"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_medium"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:contentDescription="点击打开紧急呼叫功能"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text" />
+                        <TextView
+                            android:id="@+id/tv_card_subtitle_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="未启动"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/elder_text_primary" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-        <Button
-            android:id="@+id/btn_web_bridge"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="跨设备字幕"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_xlarge"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:contentDescription="点击打开跨设备字幕功能，连接电脑浏览器"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text" />
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    app:cardElevation="2dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardBackgroundColor="@color/elder_surface">
 
-        <Button
-            android:id="@+id/btn_accessibility_settings"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="无障碍服务设置"
-            android:textSize="@dimen/elder_text_size_body"
-            android:layout_marginBottom="@dimen/elder_padding_medium"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:backgroundTint="@color/elder_primary_dark"
-            android:textColor="@color/elder_button_text"
-            android:contentDescription="点击打开系统无障碍服务设置" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp">
 
-        <Button
-            android:id="@+id/btn_app_settings"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/elder_button_height"
-            android:text="应用设置"
-            android:textSize="@dimen/elder_text_size_body"
-            android:minHeight="@dimen/elder_min_touch_target"
-            android:backgroundTint="@color/elder_button_background"
-            android:textColor="@color/elder_button_text"
-            android:contentDescription="点击打开应用设置" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="PC 连接"
+                            android:textSize="11sp"
+                            android:textColor="#999"
+                            android:layout_marginBottom="4dp" />
 
-    </LinearLayout>
+                        <TextView
+                            android:id="@+id/tv_card_bridge_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="未连接"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/elder_text_primary" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-</ScrollView>
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_weight="1"
+                    app:cardElevation="2dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardBackgroundColor="@color/elder_surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="今日服药"
+                            android:textSize="11sp"
+                            android:textColor="#999"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:id="@+id/tv_card_medication_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 次"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/elder_text_primary" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+            <!-- ===== APP 标题 ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="无障碍辅助工具"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:layout_marginBottom="20dp" />
+
+            <!-- ===== 快捷操作区 ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="快捷操作"
+                android:textSize="16sp"
+                android:textColor="#888"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_subtitle"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_weight="1"
+                    android:text="听障字幕"
+                    android:textSize="15sp"
+                    android:layout_marginEnd="8dp"
+                    app:icon="@android:drawable/ic_btn_speak_now"
+                    app:iconGravity="textTop"
+                    app:iconSize="24dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:contentDescription="听障字幕开关" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_tts_panel"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_weight="1"
+                    android:text="TTS 播报"
+                    android:textSize="15sp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    app:icon="@android:drawable/ic_lock_silence_mode"
+                    app:iconGravity="textTop"
+                    app:iconSize="24dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:contentDescription="TTS 语音播报" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_bridge"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_weight="1"
+                    android:text="PC 字幕"
+                    android:textSize="15sp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    app:icon="@android:drawable/ic_menu_share"
+                    app:iconGravity="textTop"
+                    app:iconSize="24dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:contentDescription="PC 跨设备字幕" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_medication"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_weight="1"
+                    android:text="服药提醒"
+                    android:textSize="15sp"
+                    android:layout_marginStart="8dp"
+                    app:icon="@android:drawable/ic_dialog_info"
+                    app:iconGravity="textTop"
+                    app:iconSize="24dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:contentDescription="服药提醒" />
+            </LinearLayout>
+
+            <!-- ===== 模块开关 ===== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="模块开关"
+                android:textSize="14sp"
+                android:textColor="#888"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:background="@drawable/bg_card_light"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="听障字幕"
+                    android:textSize="15sp"
+                    android:textColor="@color/elder_text_primary" />
+                <Switch android:id="@+id/switch_subtitle_module" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:background="@drawable/bg_card_light"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="TTS 语障辅助"
+                    android:textSize="15sp"
+                    android:textColor="@color/elder_text_primary" />
+                <Switch android:id="@+id/switch_tts_module" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:background="@drawable/bg_card_light"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="PC 跨设备字幕"
+                    android:textSize="15sp"
+                    android:textColor="@color/elder_text_primary" />
+                <Switch android:id="@+id/switch_bridge_module" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:background="@drawable/bg_card_light"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="老年辅助"
+                    android:textSize="15sp"
+                    android:textColor="@color/elder_text_primary" />
+                <Switch android:id="@+id/switch_elder_module" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="关闭的模块将隐藏入口并停止后台服务"
+                android:textSize="11sp"
+                android:textColor="#BBB"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ===== 底部导航栏 ===== -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/elder_surface"
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="labeled" />
+
+</LinearLayout>
