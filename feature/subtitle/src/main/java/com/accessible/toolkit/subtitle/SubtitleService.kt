@@ -16,9 +16,15 @@ import androidx.core.app.NotificationCompat
 import com.accessible.toolkit.engine.AsrCallback
 import com.accessible.toolkit.engine.VadCallback
 import com.accessible.toolkit.engine.model.TranscriptResult
+import com.accessible.toolkit.engine.model.VadEvent
 import com.accessible.toolkit.engine.AsrError
+import com.accessible.toolkit.engine.EventBus
 import com.accessible.toolkit.vad.EnergyVadDetector
 import com.accessible.toolkit.vosk.VoskAsrEngine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class SubtitleService : Service() {
 
@@ -66,6 +72,7 @@ class SubtitleService : Service() {
     private var floatingView: FloatingSubtitleView? = null
     private var actionReceiver: BroadcastReceiver? = null
     private var asrReady = false
+    private val eventScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -110,6 +117,8 @@ class SubtitleService : Service() {
         floatingView?.show()
         isRunning = true
         isPaused = false
+        EventBus.setSubtitleRunning(true)
+        EventBus.setAppState(EventBus.AppState.LISTENING)
         stateListener?.onStateChanged(true, false)
         Log.d(TAG, "Subtitle service started")
     }
@@ -120,6 +129,7 @@ class SubtitleService : Service() {
         vadDetector?.stop()
         asrEngine?.stopListening()
         isPaused = true
+        EventBus.setAppState(EventBus.AppState.PAUSED)
         updateNotification()
         floatingView?.showPaused()
         stateListener?.onStateChanged(true, true)
@@ -134,6 +144,7 @@ class SubtitleService : Service() {
             vadDetector?.start()
         }
         isPaused = false
+        EventBus.setAppState(EventBus.AppState.LISTENING)
         updateNotification()
         floatingView?.showResumed()
         stateListener?.onStateChanged(true, false)
@@ -145,12 +156,14 @@ class SubtitleService : Service() {
             override fun onPartialResult(result: TranscriptResult) {
                 if (!isPaused) {
                     floatingView?.updateSubtitle(result.text, isFinal = false)
+                    eventScope.launch { EventBus.emitAsrResult(result) }
                 }
             }
 
             override fun onFinalResult(result: TranscriptResult) {
                 if (!isPaused) {
                     floatingView?.updateSubtitle(result.text, isFinal = true)
+                    eventScope.launch { EventBus.emitAsrResult(result) }
                 }
             }
 
@@ -181,12 +194,16 @@ class SubtitleService : Service() {
                 if (!isPaused) {
                     asrEngine?.startListening()
                     floatingView?.showVoiceIndicator(isSpeaking = true)
+                    EventBus.setAppState(EventBus.AppState.TRANSCRIBING)
+                    eventScope.launch { EventBus.emitVadEvent(VadEvent(VadEvent.Type.VOICE_START)) }
                 }
             }
 
             override fun onVoiceEnd() {
                 asrEngine?.stopListening()
                 floatingView?.showVoiceIndicator(isSpeaking = false)
+                EventBus.setAppState(EventBus.AppState.LISTENING)
+                eventScope.launch { EventBus.emitVadEvent(VadEvent(VadEvent.Type.VOICE_END)) }
             }
 
             override fun onSilenceDuration(seconds: Int) {
@@ -211,6 +228,8 @@ class SubtitleService : Service() {
         floatingView = null
         isRunning = false
         isPaused = false
+        EventBus.setSubtitleRunning(false)
+        EventBus.setAppState(EventBus.AppState.IDLE)
         stateListener?.onStateChanged(false, false)
         Log.d(TAG, "Subtitle service stopped")
     }

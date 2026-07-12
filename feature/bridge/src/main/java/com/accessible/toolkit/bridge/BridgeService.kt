@@ -22,6 +22,7 @@ import com.accessible.toolkit.engine.AsrCallback
 import com.accessible.toolkit.engine.VadCallback
 import com.accessible.toolkit.engine.model.TranscriptResult
 import com.accessible.toolkit.engine.AsrError
+import com.accessible.toolkit.engine.EventBus
 import com.accessible.toolkit.vad.EnergyVadDetector
 import com.accessible.toolkit.vosk.VoskAsrEngine
 import fi.iki.elonen.NanoHTTPD
@@ -209,6 +210,7 @@ class BridgeService : Service() {
         }
 
         isRunning = true
+        EventBus.setBridgeRunning(true, lanIp, clientCount)
         serviceListener?.onStateChanged(true)
         updateNotification()
         Log.d(TAG, "Bridge service started")
@@ -231,6 +233,7 @@ class BridgeService : Service() {
 
         isRunning = false
         clientCount = 0
+        EventBus.setBridgeRunning(false)
         serviceListener?.onStateChanged(false)
         Log.d(TAG, "Bridge service stopped")
     }

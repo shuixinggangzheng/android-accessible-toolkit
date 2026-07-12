@@ -30,7 +30,13 @@ import android.widget.TextView
 import android.widget.Toast
 import com.accessible.toolkit.bridge.BridgeService
 import com.accessible.toolkit.elder.MedicationReminder
+import com.accessible.toolkit.engine.EventBus
 import com.accessible.toolkit.subtitle.SubtitleService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class QuickBallService : Service() {
 
@@ -74,6 +80,7 @@ class QuickBallService : Service() {
     private var isLongPressTriggered = false
     private lateinit var notifManager: ToolkitNotificationManager
     private var currentServiceState = ToolkitNotificationManager.ServiceState.IDLE
+    private val eventScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     enum class BallColor {
         GREEN, BLUE, GRAY
@@ -88,6 +95,34 @@ class QuickBallService : Service() {
         startForeground(NOTIFICATION_ID, notifManager.buildNotification(currentServiceState))
         createBallView()
         registerStateListener()
+        registerEventBusCollectors()
+    }
+
+    private fun registerEventBusCollectors() {
+        eventScope.launch {
+            EventBus.appState.collectLatest { state ->
+                val notifState = when (state) {
+                    EventBus.AppState.IDLE -> ToolkitNotificationManager.ServiceState.IDLE
+                    EventBus.AppState.LISTENING -> ToolkitNotificationManager.ServiceState.LISTENING
+                    EventBus.AppState.TRANSCRIBING -> ToolkitNotificationManager.ServiceState.TRANSCRIBING
+                    EventBus.AppState.READING -> ToolkitNotificationManager.ServiceState.READING
+                    EventBus.AppState.PAUSED -> ToolkitNotificationManager.ServiceState.PAUSED
+                }
+                currentServiceState = notifState
+                notifManager.update(notifState)
+                if (state == EventBus.AppState.TRANSCRIBING) ToolkitNotificationManager.markAsrActive()
+                else ToolkitNotificationManager.resetAsrActive()
+            }
+        }
+
+        eventScope.launch {
+            EventBus.asrResults.collectLatest { result ->
+                if (result.isFinal) {
+                    ToolkitNotificationManager.setLastTranscript(result.text)
+                    notifManager.update(currentServiceState)
+                }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -476,6 +511,7 @@ class QuickBallService : Service() {
     }
 
     override fun onDestroy() {
+        eventScope.cancel()
         stopPulseAnimation()
         hidePanel()
         try {
