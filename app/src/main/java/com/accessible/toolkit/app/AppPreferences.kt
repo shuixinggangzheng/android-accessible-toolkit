@@ -9,6 +9,8 @@ class AppPreferences(context: Context) {
         private const val PREFS_NAME = "app_preferences"
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_PRIVACY_ACCEPTED = "privacy_accepted"
+        private const val KEY_PRIVACY_INTRO_SEEN = "privacy_intro_seen"
+        private const val KEY_PRIVACY_INTRO_VERSION = "privacy_intro_version"
         private const val KEY_VAD_THRESHOLD = "vad_threshold"
         private const val KEY_TTS_SPEED = "tts_speed"
         private const val KEY_TTS_PITCH = "tts_pitch"
@@ -62,4 +64,12 @@ class AppPreferences(context: Context) {
     var enableTtsAlert: Boolean
         get() = prefs.getBoolean(KEY_ENABLE_TTS_ALERT, true)
         set(value) = prefs.edit().putBoolean(KEY_ENABLE_TTS_ALERT, value).apply()
+
+    var hasSeenPrivacyIntro: Boolean
+        get() = prefs.getBoolean(KEY_PRIVACY_INTRO_SEEN, false)
+        set(value) = prefs.edit().putBoolean(KEY_PRIVACY_INTRO_SEEN, value).apply()
+
+    var privacyIntroVersion: Int
+        get() = prefs.getInt(KEY_PRIVACY_INTRO_VERSION, 0)
+        set(value) = prefs.edit().putInt(KEY_PRIVACY_INTRO_VERSION, value).apply()
 }

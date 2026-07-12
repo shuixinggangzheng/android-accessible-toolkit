@@ -54,4 +54,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
 }

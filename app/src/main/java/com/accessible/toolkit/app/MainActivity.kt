@@ -43,14 +43,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        prefs = AppPreferences(this)
+        if (!prefs.hasSeenPrivacyIntro) {
+            startActivity(Intent(this, PrivacyFirstActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_main)
 
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         permissionManager = PermissionManager(this)
         permissionManager.registerLaunchers(requestPermissionLauncher, overlayPermissionLauncher)
-        prefs = AppPreferences(this)
 
-        showPrivacyFirstScreenIfNeeded()
         setupButtons()
         updateSubtitleButtonState()
         updateBridgeButtonState()
@@ -260,23 +268,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun startQuickBallService() {
         QuickBallService.start(this)
-    }
-
-    private fun showPrivacyFirstScreenIfNeeded() {
-        if (!prefs.isFirstLaunch) return
-
-        AlertDialog.Builder(this)
-            .setTitle("隐私政策")
-            .setMessage(getString(com.accessible.toolkit.service.R.string.privacy_policy_full))
-            .setPositiveButton("同意并继续") { _, _ ->
-                prefs.isPrivacyAccepted = true
-                prefs.isFirstLaunch = false
-            }
-            .setNegativeButton("退出应用") { _, _ ->
-                finishAffinity()
-            }
-            .setCancelable(false)
-            .show()
     }
 
     override fun onResume() {
