@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tv_phrase"
+    android:layout_width="wrap_content"
+    android:layout_height="40dp"
+    android:gravity="center"
+    android:paddingHorizontal="16dp"
+    android:background="@drawable/bg_phrase_item"
+    android:textSize="16sp"
+    android:textColor="#333333"
+    android:layout_marginEnd="8dp" />

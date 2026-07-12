@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AccessibleToolkit" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">#FF6B6B</item>
+        <item name="colorPrimaryVariant">#FF5252</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#4ECDC4</item>
+        <item name="colorSecondaryVariant">#45B7AA</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+    </style>
+</resources>

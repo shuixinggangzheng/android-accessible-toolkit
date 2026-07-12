@@ -1,0 +1,378 @@
+package com.accessible.toolkit.app
+
+import android.animation.ValueAnimator
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.util.Log
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import androidx.core.app.NotificationCompat
+import com.accessible.toolkit.subtitle.SubtitleService
+
+class QuickBallService : Service() {
+
+    companion object {
+        private const val TAG = "QuickBallService"
+        private const val CHANNEL_ID = "quick_ball_channel"
+        private const val NOTIFICATION_ID = 1002
+        private const val LONG_PRESS_DURATION = 500L
+
+        const val ACTION_START = "com.accessible.toolkit.QUICK_BALL_START"
+
+        fun start(context: Context) {
+            val intent = Intent(context, QuickBallService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+
+        fun stop(context: Context) {
+            val intent = Intent(context, QuickBallService::class.java)
+            context.stopService(intent)
+        }
+    }
+
+    private var windowManager: WindowManager? = null
+    private var ballView: View? = null
+    private var panelView: View? = null
+    private var ballLayoutParams: WindowManager.LayoutParams? = null
+    private var panelLayoutParams: WindowManager.LayoutParams? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var isPanelShowing = false
+    private var longPressRunnable: Runnable? = null
+    private var pulseAnimator: ValueAnimator? = null
+    private var currentBallColor = BallColor.BLUE
+
+    enum class BallColor {
+        GREEN, BLUE, GRAY
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel()
+        startForeground(NOTIFICATION_ID, createNotification())
+        createBallView()
+        registerStateListener()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
+    }
+
+    private fun registerStateListener() {
+        SubtitleService.setStateListener(object : SubtitleService.ServiceStateListener {
+            override fun onStateChanged(running: Boolean, paused: Boolean) {
+                updateBallColor(running, paused)
+            }
+        })
+    }
+
+    private fun updateBallColor(running: Boolean, paused: Boolean) {
+        val newColor = when {
+            running && !paused -> BallColor.GREEN
+            running && paused -> BallColor.BLUE
+            else -> BallColor.GRAY
+        }
+        setBallColor(newColor)
+    }
+
+    private fun createBallView() {
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+
+        ballView = LayoutInflater.from(this).inflate(R.layout.layout_quick_ball, null)
+        val ballIcon = ballView?.findViewById<View>(R.id.ball_icon)
+
+        ballLayoutParams = WindowManager.LayoutParams(
+            56.dpToPx(),
+            56.dpToPx(),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            x = 16.dpToPx()
+        }
+
+        setupBallTouchListener(ballIcon)
+        windowManager?.addView(ballView, ballLayoutParams)
+        setBallColor(BallColor.BLUE)
+    }
+
+    private fun setupBallTouchListener(ballIcon: View?) {
+        var initialX = 0
+        var initialY = 0
+        var initialTouchX = 0f
+        var initialTouchY = 0f
+        var isDragging = false
+
+        ballIcon?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = ballLayoutParams?.x ?: 0
+                    initialY = ballLayoutParams?.y ?: 0
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    isDragging = false
+
+                    longPressRunnable = Runnable {
+                        if (!isDragging) {
+                            onBallLongPress()
+                        }
+                    }
+                    handler.postDelayed(longPressRunnable!!, LONG_PRESS_DURATION)
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = (initialTouchX - event.rawX).toInt()
+                    val dy = (event.rawY - initialTouchY).toInt()
+                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                        isDragging = true
+                        handler.removeCallbacks(longPressRunnable!!)
+                    }
+                    if (isDragging) {
+                        ballLayoutParams?.x = initialX + dx
+                        ballLayoutParams?.y = initialY + dy
+                        windowManager?.updateViewLayout(ballView, ballLayoutParams)
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(longPressRunnable!!)
+                    if (!isDragging) {
+                        onBallClick()
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun onBallClick() {
+        if (isPanelShowing) {
+            hidePanel()
+        } else {
+            showPanel()
+        }
+    }
+
+    private fun onBallLongPress() {
+        val emergencyNumber = getEmergencyNumber()
+        if (emergencyNumber != null) {
+            val intent = Intent(Intent.ACTION_CALL).apply {
+                data = android.net.Uri.parse("tel:$emergencyNumber")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            try {
+                startActivity(intent)
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Failed to make emergency call", e)
+            }
+        }
+    }
+
+    private fun getEmergencyNumber(): String? {
+        val prefs = getSharedPreferences("emergency", MODE_PRIVATE)
+        return prefs.getString("phone_number", null)
+    }
+
+    private fun showPanel() {
+        if (isPanelShowing) return
+
+        panelView = LayoutInflater.from(this).inflate(R.layout.layout_quick_ball_panel, null)
+        setupPanelButtons()
+
+        panelLayoutParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            x = 80.dpToPx()
+        }
+
+        windowManager?.addView(panelView, panelLayoutParams)
+        isPanelShowing = true
+    }
+
+    private fun hidePanel() {
+        if (!isPanelShowing) return
+        try {
+            windowManager?.removeView(panelView)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to remove panel", e)
+        }
+        panelView = null
+        isPanelShowing = false
+    }
+
+    private fun setupPanelButtons() {
+        panelView?.findViewById<View>(R.id.btn_subtitle)?.setOnClickListener {
+            toggleSubtitle()
+            hidePanel()
+        }
+
+        panelView?.findViewById<View>(R.id.btn_tts)?.setOnClickListener {
+            openTtsPanel()
+            hidePanel()
+        }
+
+        panelView?.findViewById<View>(R.id.btn_emergency)?.setOnClickListener {
+            onBallLongPress()
+            hidePanel()
+        }
+
+        panelView?.findViewById<View>(R.id.btn_settings)?.setOnClickListener {
+            openSettings()
+            hidePanel()
+        }
+    }
+
+    private fun toggleSubtitle() {
+        if (SubtitleService.isRunning) {
+            SubtitleService.stop(this)
+        } else {
+            SubtitleService.start(this)
+        }
+    }
+
+    private fun openTtsPanel() {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtra("open_tts", true)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    }
+
+    private fun openSettings() {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    }
+
+    private fun setBallColor(color: BallColor) {
+        val colorValue = when (color) {
+            BallColor.GREEN -> 0xFF4CAF50.toInt()
+            BallColor.BLUE -> 0xFF2196F3.toInt()
+            BallColor.GRAY -> 0xFF9E9E9E.toInt()
+        }
+
+        currentBallColor = color
+        ballView?.post {
+            val ballIcon = ballView?.findViewById<View>(R.id.ball_icon)
+            val background = ballIcon?.background as? GradientDrawable
+            background?.setColor(colorValue)
+
+            if (color == BallColor.GREEN) {
+                startPulseAnimation()
+            } else {
+                stopPulseAnimation()
+            }
+        }
+    }
+
+    private fun startPulseAnimation() {
+        stopPulseAnimation()
+        pulseAnimator = ValueAnimator.ofFloat(1.0f, 1.15f).apply {
+            duration = 800
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener { animator ->
+                val scale = animator.animatedValue as Float
+                ballView?.scaleX = scale
+                ballView?.scaleY = scale
+            }
+            start()
+        }
+    }
+
+    private fun stopPulseAnimation() {
+        pulseAnimator?.cancel()
+        pulseAnimator = null
+        ballView?.scaleX = 1.0f
+        ballView?.scaleY = 1.0f
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "快捷悬浮球",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "快捷操作悬浮球"
+                setShowBadge(false)
+            }
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun createNotification(): Notification {
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("快捷操作")
+            .setContentText("悬浮球已启动")
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .build()
+    }
+
+    private fun Int.dpToPx(): Int {
+        return (this * resources.displayMetrics.density).toInt()
+    }
+
+    override fun onDestroy() {
+        stopPulseAnimation()
+        hidePanel()
+        try {
+            windowManager?.removeView(ballView)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to remove ball view", e)
+        }
+        ballView = null
+        SubtitleService.setStateListener(null)
+        super.onDestroy()
+    }
+}

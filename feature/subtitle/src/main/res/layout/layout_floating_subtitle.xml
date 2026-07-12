@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tv_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#E6FF5252"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="4dp">
+
+        <ImageView
+            android:id="@+id/iv_voice_indicator"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_lock_silent_mode"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#B0FFFFFF"
+            android:textSize="12sp"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_paused"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#99FFA500"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="已暂停"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tv_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#E6000000"
+        android:gravity="center"
+        android:padding="12dp"
+        android:text="等待语音输入..."
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

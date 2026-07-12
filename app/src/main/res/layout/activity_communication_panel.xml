@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="双向沟通面板"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <Button
+            android:id="@+id/btn_start_listening"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="开始监听"
+            android:textSize="14sp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_stop_listening"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="停止监听"
+            android:textSize="14sp"
+            android:visibility="gone"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/tv_listening_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="已停止监听"
+            android:textSize="14sp"
+            android:gravity="center_vertical"
+            android:layout_marginStart="8dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@drawable/bg_card"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="接收到的信息"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <ScrollView
+            android:id="@+id/scroll_received"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#F5F5F5"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/tv_received_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="等待对话..."
+                android:textSize="18sp"
+                android:lineSpacingExtra="4dp" />
+
+        </ScrollView>
+
+        <TextView
+            android:id="@+id/tv_voice_active"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="对方正在说话..."
+            android:textSize="14sp"
+            android:textColor="#4CAF50"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btn_clear_received"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="清空记录"
+            android:textSize="12sp"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_card"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="输入要播报的文字"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/et_input_text"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:hint="输入文字..."
+                android:inputType="text"
+                android:padding="12dp"
+                android:background="@drawable/bg_edit_text"
+                android:textSize="16sp"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btn_speak"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:text="播报"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_clear_input"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="清空输入"
+            android:textSize="12sp"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="无障碍辅助工具"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="32dp" />
+
+        <Button
+            android:id="@+id/btn_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="听障字幕"
+            android:textSize="18sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btn_voice_assist"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="语障辅助"
+            android:textSize="18sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btn_communication"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="双向沟通"
+            android:textSize="18sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btn_medication_reminder"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="服药提醒"
+            android:textSize="18sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btn_emergency_call"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="一键呼叫"
+            android:textSize="18sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btn_web_bridge"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="跨设备字幕"
+            android:textSize="18sp"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btn_accessibility_settings"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="无障碍服务设置"
+            android:textSize="18sp"
+            android:backgroundTint="#FF6B6B" />
+
+    </LinearLayout>
+
+</ScrollView>
