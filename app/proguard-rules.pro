@@ -1,6 +1,6 @@
-# Vosk - keep native libraries
+# Vosk - keep native libraries (com.alphacephei:vosk-android)
 -keep class org.vosk.** { *; }
--keep class com.sun.jna.** { *; }
+-keep class com.alphacephei.** { *; }
 -dontwarn org.vosk.**
 -dontwarn com.sun.jna.**
 
