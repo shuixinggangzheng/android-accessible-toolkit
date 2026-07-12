@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/elder_background">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/elder_surface"
+        android:elevation="4dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VAD 灵敏度"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <SeekBar
+                    android:id="@+id/seekbar_vad_threshold"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_vad_threshold_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="3.0x"
+                    android:textSize="14sp"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TTS 语速"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <SeekBar
+                    android:id="@+id/seekbar_tts_speed"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_tts_speed_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="1.0x"
+                    android:textSize="14sp"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TTS 音调"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <SeekBar
+                    android:id="@+id/seekbar_tts_pitch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_tts_pitch_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="1.0"
+                    android:textSize="14sp"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="字幕字体大小"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <SeekBar
+                    android:id="@+id/seekbar_subtitle_font"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="60" />
+
+                <TextView
+                    android:id="@+id/tv_subtitle_font_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="24sp"
+                    android:textSize="14sp"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="跨设备端口"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <SeekBar
+                    android:id="@+id/seekbar_bridge_port"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="9000" />
+
+                <TextView
+                    android:id="@+id/tv_bridge_port_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="8765"
+                    android:textSize="14sp"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="提醒设置"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="震动提醒"
+                    android:textSize="16sp"
+                    android:textColor="@color/elder_text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_vibrate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="语音播报告警"
+                    android:textSize="16sp"
+                    android:textColor="@color/elder_text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_tts_alert"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_show_privacy"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/elder_button_height"
+                android:text="查看隐私政策"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

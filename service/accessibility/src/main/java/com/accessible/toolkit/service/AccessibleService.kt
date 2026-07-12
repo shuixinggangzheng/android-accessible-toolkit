@@ -1,18 +1,30 @@
 package com.accessible.toolkit.service
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.GestureDescription
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Path
+import android.media.AudioManager
 import android.os.Build
+import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import java.util.Locale
 
 class AccessibleService : AccessibilityService() {
 
     companion object {
         private const val TAG = "AccessibleService"
+        private const val PREFS_NAME = "accessibility_prefs"
+        private const val KEY_TTS_ENABLED = "tts_enabled"
+        private const val KEY_MISSING_LABEL_COUNT = "missing_label_count"
+
         var instance: AccessibleService? = null
             private set
 
@@ -21,6 +33,12 @@ class AccessibleService : AccessibilityService() {
 
     private var eventListener: AccessibilityEventListener? = null
     private val nodeCache = mutableMapOf<String, AccessibilityNodeInfo>()
+    private var tts: TextToSpeech? = null
+    private var ttsEnabled = true
+    private var missingLabelCount = 0L
+    private val prefs: SharedPreferences by lazy {
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
 
     interface AccessibilityEventListener {
         fun onAccessibilityEvent(event: AccessibilityEvent)
@@ -31,7 +49,40 @@ class AccessibleService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        Log.d(TAG, "Accessibility service connected")
+        ttsEnabled = prefs.getBoolean(KEY_TTS_ENABLED, true)
+        missingLabelCount = prefs.getLong(KEY_MISSING_LABEL_COUNT, 0L)
+        initTtsIfNeeded()
+
+        val info = AccessibilityServiceInfo().apply {
+            eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+            feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN
+            flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                    AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+            notificationTimeout = 100
+        }
+        serviceInfo = info
+
+        Log.d(TAG, "Accessibility service connected, TTS: $ttsEnabled")
+    }
+
+    private fun initTtsIfNeeded() {
+        if (!ttsEnabled || tts != null) return
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            val currentVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
+            if (currentVolume == 0) return
+
+            tts = TextToSpeech(this) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    tts?.language = Locale.getDefault()
+                    Log.d(TAG, "TTS initialized successfully")
+                } else {
+                    Log.w(TAG, "TTS init failed, status=$status")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to init TTS", e)
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -94,15 +145,28 @@ class AccessibleService : AccessibilityService() {
     }
 
     private fun handleMissingLabel(source: AccessibilityNodeInfo) {
-        Log.d(TAG, "Missing label detected, supplementary TTS may be needed")
+        missingLabelCount++
+        prefs.edit().putLong(KEY_MISSING_LABEL_COUNT, missingLabelCount).apply()
 
-        // 尝试获取有用的描述信息
         val viewId = source.viewIdResourceName
         val className = source.className?.toString()
         val bounds = android.graphics.Rect()
         source.getBoundsInScreen(bounds)
 
-        Log.d(TAG, "Missing label info: viewId=$viewId, class=$className, bounds=$bounds")
+        Log.d(TAG, "Missing label #$missingLabelCount: viewId=$viewId, class=$className, bounds=$bounds")
+
+        if (ttsEnabled && tts != null && missingLabelCount <= 5) {
+            val hint = when {
+                source.isClickable -> "未标记的可点击按钮"
+                source.isEditable -> "未标记的输入框"
+                className?.contains("Image") == true -> "未标记的图片"
+                className?.contains("Button") == true -> "未标记的按钮"
+                else -> "未标记的界面元素"
+            }
+            try {
+                tts?.speak(hint, TextToSpeech.QUEUE_FLUSH, null, "missing_label_$missingLabelCount")
+            } catch (_: Exception) {}
+        }
     }
 
     override fun onInterrupt() {
@@ -112,8 +176,34 @@ class AccessibleService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         clearNodeCache()
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
         instance = null
         Log.d(TAG, "Accessibility service destroyed")
+    }
+
+    fun setTtsEnabled(enabled: Boolean) {
+        ttsEnabled = enabled
+        prefs.edit().putBoolean(KEY_TTS_ENABLED, enabled).apply()
+        if (!enabled) {
+            tts?.stop()
+            tts?.shutdown()
+            tts = null
+        } else if (tts == null) {
+            initTtsIfNeeded()
+        }
+    }
+
+    fun isTtsEnabled(): Boolean = ttsEnabled
+
+    fun getMissingLabelCount(): Long = missingLabelCount
+
+    fun speakText(text: String) {
+        if (!ttsEnabled || tts == null) return
+        try {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "speak_${System.currentTimeMillis()}")
+        } catch (_: Exception) {}
     }
 
     fun setEventListener(listener: AccessibilityEventListener?) {

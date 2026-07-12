@@ -7,6 +7,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -27,9 +29,10 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.RemoteViews
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.accessible.toolkit.bridge.BridgeService
 import com.accessible.toolkit.elder.MedicationReminder
 import com.accessible.toolkit.subtitle.SubtitleService
 
@@ -305,6 +308,11 @@ class QuickBallService : Service() {
             hidePanel()
         }
 
+        panelView?.findViewById<View>(R.id.btn_bridge)?.setOnClickListener {
+            toggleBridge()
+            hidePanel()
+        }
+
         panelView?.findViewById<View>(R.id.btn_emergency)?.setOnClickListener {
             onBallLongPress()
             hidePanel()
@@ -322,6 +330,25 @@ class QuickBallService : Service() {
         } else {
             SubtitleService.start(this)
         }
+    }
+
+    private fun toggleBridge() {
+        if (BridgeService.isRunning) {
+            BridgeService.stop(this)
+            Toast.makeText(this, "PC字幕服务已关闭", Toast.LENGTH_SHORT).show()
+        } else {
+            val lanIp = BridgeService.getDeviceLanIp(this)
+            BridgeService.start(this)
+            val httpPort = 8766
+            val addr = "$lanIp:$httpPort"
+            copyToClipboard(addr)
+            Toast.makeText(this, "PC字幕已启动\n$addr (已复制)", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun copyToClipboard(text: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        clipboard?.setPrimaryClip(ClipData.newPlainText("server_address", text))
     }
 
     private fun openTtsPanel() {

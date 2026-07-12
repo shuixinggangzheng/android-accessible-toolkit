@@ -15,16 +15,17 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import com.accessible.toolkit.bridge.BridgeService
 import com.accessible.toolkit.elder.MedicationReminderActivity
 import com.accessible.toolkit.service.AccessibleService
 import com.accessible.toolkit.subtitle.SubtitleService
 import com.accessible.toolkit.voice.VoiceAssistActivity
-import com.accessible.toolkit.bridge.BridgeService
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var permissionManager: PermissionManager
+    private lateinit var prefs: AppPreferences
     private var isSubtitleRunning = false
     private var isBridgeRunning = false
 
@@ -47,7 +48,9 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         permissionManager = PermissionManager(this)
         permissionManager.registerLaunchers(requestPermissionLauncher, overlayPermissionLauncher)
+        prefs = AppPreferences(this)
 
+        showPrivacyFirstScreenIfNeeded()
         setupButtons()
         updateSubtitleButtonState()
         updateBridgeButtonState()
@@ -85,6 +88,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btn_accessibility_settings).setOnClickListener {
             permissionManager.openAccessibilitySettings()
+        }
+
+        findViewById<Button>(R.id.btn_app_settings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 
@@ -253,6 +260,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun startQuickBallService() {
         QuickBallService.start(this)
+    }
+
+    private fun showPrivacyFirstScreenIfNeeded() {
+        if (!prefs.isFirstLaunch) return
+
+        AlertDialog.Builder(this)
+            .setTitle("隐私政策")
+            .setMessage(getString(com.accessible.toolkit.service.R.string.privacy_policy_full))
+            .setPositiveButton("同意并继续") { _, _ ->
+                prefs.isPrivacyAccepted = true
+                prefs.isFirstLaunch = false
+            }
+            .setNegativeButton("退出应用") { _, _ ->
+                finishAffinity()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     override fun onResume() {

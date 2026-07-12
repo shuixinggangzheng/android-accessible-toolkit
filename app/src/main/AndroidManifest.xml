@@ -40,6 +40,10 @@
             android:name=".VoiceOutputActivity"
             android:theme="@style/Theme.AccessibleToolkit.Elder" />
 
+        <activity
+            android:name=".SettingsActivity"
+            android:theme="@style/Theme.AccessibleToolkit.Elder" />
+
         <service
             android:name=".QuickBallService"
             android:exported="false"

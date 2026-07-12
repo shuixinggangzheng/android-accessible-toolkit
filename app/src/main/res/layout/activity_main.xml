@@ -111,10 +111,22 @@
             android:layout_height="@dimen/elder_button_height"
             android:text="无障碍服务设置"
             android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
             android:minHeight="@dimen/elder_min_touch_target"
             android:backgroundTint="@color/elder_primary_dark"
             android:textColor="@color/elder_button_text"
             android:contentDescription="点击打开系统无障碍服务设置" />
+
+        <Button
+            android:id="@+id/btn_app_settings"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/elder_button_height"
+            android:text="应用设置"
+            android:textSize="@dimen/elder_text_size_body"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text"
+            android:contentDescription="点击打开应用设置" />
 
     </LinearLayout>
 

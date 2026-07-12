@@ -34,6 +34,12 @@
     box-shadow: 0 0 6px currentColor;
     transition: background 0.3s, box-shadow 0.3s;
   }
+  #securityBar {
+    padding: 4px 16px; min-height: 24px;
+    font-size: 11px; color: rgba(255,255,255,0.3);
+    text-align: center; background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
   #statusDot.connected { background: #4CAF50; }
   #statusText {
     font-size: 14px; color: rgba(255,255,255,0.7);
@@ -118,6 +124,8 @@
   <span id="statusText">正在连接...</span>
   <span id="ipDisplay"></span>
 </div>
+
+<div id="securityBar">请确保你与手机在同一 WiFi 网络下</div>
 
 <div id="subtitleArea">
   <div id="currentSubtitle">等待语音输入...</div>

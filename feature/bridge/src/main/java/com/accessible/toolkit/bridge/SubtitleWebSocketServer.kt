@@ -12,8 +12,9 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class SubtitleWebSocketServer(
-    port: Int = DEFAULT_PORT
-) : WebSocketServer(InetSocketAddress(port)) {
+    port: Int = DEFAULT_PORT,
+    bindAddress: String = "127.0.0.1"
+) : WebSocketServer(InetSocketAddress(bindAddress, port)) {
 
     companion object {
         private const val TAG = "SubtitleWebSocketServer"

@@ -9,6 +9,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -21,6 +26,8 @@ import com.accessible.toolkit.vad.EnergyVadDetector
 import com.accessible.toolkit.vosk.VoskAsrEngine
 import fi.iki.elonen.NanoHTTPD
 import java.io.IOException
+import java.net.Inet4Address
+import java.net.NetworkInterface
 
 class BridgeService : Service() {
 
@@ -37,12 +44,16 @@ class BridgeService : Service() {
         var isRunning = false
             private set
 
+        var currentLanIp: String = "127.0.0.1"
+            private set
+
         private var serviceListener: ServiceListener? = null
 
         interface ServiceListener {
             fun onStateChanged(running: Boolean)
             fun onTranscriptUpdate(text: String, isFinal: Boolean)
             fun onVadStateChange(state: SubtitleWebSocketServer.VadState)
+            fun onServerAddressChanged(ip: String, httpPort: Int)
         }
 
         fun setServiceListener(listener: ServiceListener?) {
@@ -74,6 +85,36 @@ class BridgeService : Service() {
             }
             context.startService(intent)
         }
+
+        fun getDeviceLanIp(context: Context): String {
+            try {
+                val wifiManager = context.applicationContext
+                    .getSystemService(Context.WIFI_SERVICE) as? WifiManager
+                val ipAddress = wifiManager?.connectionInfo?.ipAddress ?: 0
+                if (ipAddress != 0) {
+                    return String.format(
+                        "%d.%d.%d.%d",
+                        ipAddress and 0xff,
+                        ipAddress shr 8 and 0xff,
+                        ipAddress shr 16 and 0xff,
+                        ipAddress shr 24 and 0xff
+                    )
+                }
+            } catch (_: Exception) {}
+
+            try {
+                NetworkInterface.getNetworkInterfaces()?.toList()?.forEach { intf ->
+                    if (intf.isUp && !intf.isLoopback) {
+                        intf.inetAddresses.toList()
+                            .filterIsInstance<Inet4Address>()
+                            .filter { !it.isLoopbackAddress }
+                            .forEach { return it.hostAddress ?: "127.0.0.1" }
+                    }
+                }
+            } catch (_: Exception) {}
+
+            return "127.0.0.1"
+        }
     }
 
     private var webSocketServer: SubtitleWebSocketServer? = null
@@ -81,6 +122,8 @@ class BridgeService : Service() {
     private var asrEngine: VoskAsrEngine? = null
     private var vadDetector: EnergyVadDetector? = null
     private var actionReceiver: BroadcastReceiver? = null
+    private var connectivityCallback: ConnectivityManager.NetworkCallback? = null
+    private var wasStoppedByNetwork = false
     private var clientCount = 0
     private var serverPort = SubtitleWebSocketServer.DEFAULT_PORT
     private var asrReady = false
@@ -91,6 +134,7 @@ class BridgeService : Service() {
         super.onCreate()
         createNotificationChannel()
         registerActionReceiver()
+        registerNetworkCallback()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -117,7 +161,12 @@ class BridgeService : Service() {
     }
 
     private fun startBridge() {
-        webSocketServer = SubtitleWebSocketServer(serverPort).apply {
+        val lanIp = getDeviceLanIp(this)
+        currentLanIp = lanIp
+        val httpPort = serverPort + 1
+        wasStoppedByNetwork = false
+
+        webSocketServer = SubtitleWebSocketServer(serverPort, bindAddress = lanIp).apply {
             setListener(object : SubtitleWebSocketServer.ServerListener {
                 override fun onClientConnected(count: Int) {
                     clientCount = count
@@ -137,15 +186,17 @@ class BridgeService : Service() {
             })
             startServer()
         }
+        Log.d(TAG, "WebSocket server started on $lanIp:$serverPort")
 
-        // Start HTTP server for browser subtitle page
         try {
-            httpServer = SubtitleHttpServer(serverPort + 1, this)
+            httpServer = SubtitleHttpServer(httpPort, this)
             httpServer?.start()
-            Log.d(TAG, "HTTP server started on port ${serverPort + 1}")
+            Log.d(TAG, "HTTP server started on $lanIp:$httpPort")
         } catch (e: IOException) {
             Log.e(TAG, "Failed to start HTTP server", e)
         }
+
+        serviceListener?.onServerAddressChanged(lanIp, httpPort)
 
         asrReady = false
         asrEngine = VoskAsrEngine(this).apply {
@@ -160,7 +211,7 @@ class BridgeService : Service() {
         isRunning = true
         serviceListener?.onStateChanged(true)
         updateNotification()
-        Log.d(TAG, "Bridge service started on port $serverPort")
+        Log.d(TAG, "Bridge service started")
     }
 
     private fun stopBridge() {
@@ -185,9 +236,14 @@ class BridgeService : Service() {
     }
 
     private fun restartServer() {
+        val lanIp = getDeviceLanIp(this)
+        currentLanIp = lanIp
+
         webSocketServer?.stopServer()
         webSocketServer?.destroy()
-        webSocketServer = SubtitleWebSocketServer(serverPort).apply {
+        httpServer?.stop()
+
+        webSocketServer = SubtitleWebSocketServer(serverPort, bindAddress = lanIp).apply {
             setListener(object : SubtitleWebSocketServer.ServerListener {
                 override fun onClientConnected(count: Int) {
                     clientCount = count
@@ -207,7 +263,73 @@ class BridgeService : Service() {
             })
             startServer()
         }
-        Log.d(TAG, "Server restarted on port $serverPort")
+
+        val httpPort = serverPort + 1
+        try {
+            httpServer = SubtitleHttpServer(httpPort, this)
+            httpServer?.start()
+        } catch (e: IOException) {
+            Log.e(TAG, "Failed to restart HTTP server", e)
+        }
+
+        serviceListener?.onServerAddressChanged(lanIp, httpPort)
+        Log.d(TAG, "Server restarted on $lanIp:$serverPort")
+    }
+
+    private fun registerNetworkCallback() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val request = NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                .build()
+
+            connectivityCallback = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    Log.d(TAG, "WiFi connected")
+                    if (wasStoppedByNetwork && !isRunning) {
+                        Log.d(TAG, "WiFi restored, re-enabling bridge service")
+                        startBridge()
+                    } else if (isRunning) {
+                        restartServer()
+                    }
+                }
+
+                override fun onLost(network: Network) {
+                    Log.d(TAG, "WiFi disconnected")
+                    if (isRunning) {
+                        wasStoppedByNetwork = true
+                        stopBridge()
+                    }
+                }
+
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    networkCapabilities: NetworkCapabilities
+                ) {
+                    val hasInternet = networkCapabilities.hasCapability(
+                        NetworkCapabilities.NET_CAPABILITY_INTERNET
+                    )
+                    val hasWifi = networkCapabilities.hasTransport(
+                        NetworkCapabilities.TRANSPORT_WIFI
+                    )
+                    if (hasWifi && !isRunning && wasStoppedByNetwork) {
+                        Log.d(TAG, "WiFi capabilities restored")
+                        startBridge()
+                    }
+                }
+            }
+            connectivityManager.registerNetworkCallback(request, connectivityCallback!!)
+        }
+    }
+
+    private fun unregisterNetworkCallback() {
+        connectivityCallback?.let {
+            try {
+                val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                connectivityManager?.unregisterNetworkCallback(it)
+            } catch (_: Exception) {}
+        }
+        connectivityCallback = null
     }
 
     private fun createAsrCallback(): AsrCallback {
@@ -281,9 +403,9 @@ class BridgeService : Service() {
 
         val title = "跨设备字幕服务运行中"
         val text = if (clientCount > 0) {
-            "已连接 $clientCount 个设备 | 端口: $serverPort"
+            "已连接 $clientCount 个设备 | $currentLanIp:$serverPort"
         } else {
-            "等待设备连接... | 端口: $serverPort"
+            "$currentLanIp:$serverPort"
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -346,25 +468,20 @@ class BridgeService : Service() {
 
     override fun onDestroy() {
         unregisterActionReceiver()
+        unregisterNetworkCallback()
         stopBridge()
         super.onDestroy()
     }
 
-    /**
-     * NanoHTTPD server that serves the subtitle HTML page from assets
-     * and acts as a reverse proxy for WebSocket connections.
-     */
     private class SubtitleHttpServer(
         port: Int,
         private val service: BridgeService
     ) : NanoHTTPD(port) {
 
         override fun serve(session: IHTTPSession): Response {
-            val uri = session.uri
-
-            return when {
-                uri == "/" || uri == "/index.html" -> serveSubtitlePage()
-                uri == "/api/status" -> serveStatusJson()
+            return when (session.uri) {
+                "/", "/index.html" -> serveSubtitlePage()
+                "/api/status" -> serveStatusJson()
                 else -> newFixedLengthResponse(
                     Response.Status.NOT_FOUND,
                     "text/plain", "Not Found"
@@ -376,7 +493,6 @@ class BridgeService : Service() {
             return try {
                 val inputStream = service.assets.open("subtitle.html")
                 val html = inputStream.bufferedReader().use { it.readText() }
-                inputStream.close()
                 newFixedLengthResponse(
                     Response.Status.OK,
                     "text/html; charset=utf-8",
@@ -392,7 +508,10 @@ class BridgeService : Service() {
         }
 
         private fun serveStatusJson(): Response {
-            val json = """{"running":true,"port":${service.serverPort},"clients":${service.clientCount}}"""
+            val ip = currentLanIp
+            val json = """
+                {"running":true,"ip":"$ip","wsPort":${service.serverPort},"httpPort":${port},"clients":${service.clientCount}}
+            """.trimIndent()
             return newFixedLengthResponse(
                 Response.Status.OK,
                 "application/json; charset=utf-8",
