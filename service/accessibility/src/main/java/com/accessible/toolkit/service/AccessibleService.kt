@@ -1,19 +1,20 @@
 package com.accessible.toolkit.service
 
+import android.accessibilityservice.AccessibilityGestureEvent
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.accessibilityservice.GestureDescription
 import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.graphics.Path
-import android.media.AudioManager
+import android.media.AudioAttributes
+import android.media.AudioPlaybackCaptureConfiguration
+import android.media.AudioRecord
+import android.media.projection.MediaProjection
 import android.os.Build
-import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
 import android.view.accessibility.AccessibilityNodeInfo
 import java.util.Locale
 
@@ -21,37 +22,67 @@ class AccessibleService : AccessibilityService() {
 
     companion object {
         private const val TAG = "AccessibleService"
-        private const val PREFS_NAME = "accessibility_prefs"
-        private const val KEY_TTS_ENABLED = "tts_enabled"
-        private const val KEY_MISSING_LABEL_COUNT = "missing_label_count"
 
         var instance: AccessibleService? = null
             private set
 
         fun isRunning(): Boolean = instance != null
+
+        const val GESTURE_SWIPE_DOWN = "swipe_down"
+        const val GESTURE_SWIPE_UP = "swipe_up"
+        const val GESTURE_DOUBLE_TAP = "double_tap"
     }
 
+    // === Core state ===
     private var eventListener: AccessibilityEventListener? = null
-    private val nodeCache = mutableMapOf<String, AccessibilityNodeInfo>()
     private var tts: TextToSpeech? = null
-    private var ttsEnabled = true
-    private var missingLabelCount = 0L
-    private val prefs: SharedPreferences by lazy {
-        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    }
+    private val handler = Handler(Looper.getMainLooper())
+
+    // TalkBack tracking
+    private var isTalkBackRunning = false
+    private var talkBackCheckPending = true
+
+    // Audio capture
+    private var audioRecord: AudioRecord? = null
+    private var audioCaptureThread: Thread? = null
+
+    // Gesture state
+    private val gestureSwipeThreshold = 300f
+    private var lastGestureTime = 0L
+    private var lastGestureType = ""
+    private var gestureStartY = 0f
+
+    // === Public interface ===
 
     interface AccessibilityEventListener {
-        fun onAccessibilityEvent(event: AccessibilityEvent)
-        fun onWindowChange(event: AccessibilityEvent)
-        fun onNodeInteracted(nodeInfo: AccessibilityNodeInfo, action: String)
+        fun onAccessibilityEvent(event: AccessibilityEvent) {}
+        fun onWindowChange(event: AccessibilityEvent) {}
+        fun onNodeInteracted(nodeInfo: AccessibilityNodeInfo, action: String) {}
+        fun onMediaPlaybackDetected(packageName: String) {}
     }
+
+    /** Gesture action listener for the 3-finger shortcuts */
+    interface GestureActionListener {
+        fun onSubtitleToggle()
+        fun onTtsPanelOpen()
+        fun onEmergencyCall()
+    }
+
+    private var gestureActionListener: GestureActionListener? = null
+
+    fun setEventListener(listener: AccessibilityEventListener?) {
+        this.eventListener = listener
+    }
+
+    fun setGestureActionListener(listener: GestureActionListener?) {
+        this.gestureActionListener = listener
+    }
+
+    // === Lifecycle ===
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        ttsEnabled = prefs.getBoolean(KEY_TTS_ENABLED, true)
-        missingLabelCount = prefs.getLong(KEY_MISSING_LABEL_COUNT, 0L)
-        initTtsIfNeeded()
 
         val info = AccessibilityServiceInfo().apply {
             eventTypes = AccessibilityEvent.TYPES_ALL_MASK
@@ -59,30 +90,20 @@ class AccessibleService : AccessibilityService() {
             flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
             notificationTimeout = 100
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Enable gesture detection (3-finger shortcuts)
+                flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Allow detecting media playback
+                flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY
+            }
         }
         serviceInfo = info
 
-        Log.d(TAG, "Accessibility service connected, TTS: $ttsEnabled")
-    }
-
-    private fun initTtsIfNeeded() {
-        if (!ttsEnabled || tts != null) return
-        try {
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-            val currentVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
-            if (currentVolume == 0) return
-
-            tts = TextToSpeech(this) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    tts?.language = Locale.getDefault()
-                    Log.d(TAG, "TTS initialized successfully")
-                } else {
-                    Log.w(TAG, "TTS init failed, status=$status")
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to init TTS", e)
-        }
+        initTts()
+        checkTalkBackState()
+        Log.d(TAG, "Service connected")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -92,211 +113,333 @@ class AccessibleService : AccessibilityService() {
 
         when (event.eventType) {
             AccessibilityEvent.TYPE_VIEW_CLICKED,
-            AccessibilityEvent.TYPE_VIEW_LONG_CLICKED -> {
-                processViewInteraction(event, "click")
-            }
-            AccessibilityEvent.TYPE_VIEW_FOCUSED -> {
-                processViewInteraction(event, "focus")
-            }
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                eventListener?.onWindowChange(event)
+            AccessibilityEvent.TYPE_VIEW_LONG_CLICKED ->
+                processViewInteraction(event)
+
+            AccessibilityEvent.TYPE_VIEW_FOCUSED,
+            AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED ->
+                processFocusEvent(event)
+
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ->
                 processWindowEvent(event)
-            }
-            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
+
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ->
+                eventListener?.onWindowChange(event)
+
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED ->
                 processTextChange(event)
+
+            AccessibilityEvent.TYPE_ANNOUNCEMENT -> {
+                // TalkBack announcement — track TalkBack state
+                if (talkBackCheckPending) {
+                    checkTalkBackState()
+                }
             }
         }
     }
 
-    private fun processWindowEvent(event: AccessibilityEvent) {
-        val source = event.source
-        if (source != null) {
-            val packageName = event.packageName?.toString()
-            val className = event.className?.toString()
-            val text = source.text?.toString()
-            val contentDescription = source.contentDescription?.toString()
+    // === Gesture Handling (3-finger) ===
 
-            Log.d(TAG, "Window event: pkg=$packageName, class=$className")
+    override fun onGesture(gestureEvent: AccessibilityGestureEvent?): Boolean {
+        gestureEvent ?: return false
 
-            // 缓存节点信息
-            val key = "$packageName:$className"
-            nodeCache[key]?.recycle()
-            nodeCache[key] = AccessibilityNodeInfo.obtain(source)
+        val now = System.currentTimeMillis()
 
-            if (text.isNullOrEmpty() && contentDescription.isNullOrEmpty()) {
-                handleMissingLabel(source)
+        when {
+            // 3-finger swipe down → toggle subtitle
+            gestureEvent.gestureId == AccessibilityGestureEvent.GESTURE_SWIPE_DOWN &&
+            gestureEvent.displayLocation != null -> {
+                Log.d(TAG, "3-finger swipe DOWN detected")
+                gestureActionListener?.onSubtitleToggle()
+                speakFeedback("字幕")
+                return true
+            }
+
+            // 3-finger swipe up → open TTS panel
+            gestureEvent.gestureId == AccessibilityGestureEvent.GESTURE_SWIPE_UP &&
+            gestureEvent.displayLocation != null -> {
+                Log.d(TAG, "3-finger swipe UP detected")
+                gestureActionListener?.onTtsPanelOpen()
+                speakFeedback("语音播报")
+                return true
+            }
+
+            // 3-finger double-tap → emergency call
+            gestureEvent.gestureId == AccessibilityGestureEvent.GESTURE_DOUBLE_TAP &&
+            gestureEvent.displayLocation != null -> {
+                Log.d(TAG, "3-finger DOUBLE-TAP detected")
+                // Double-tap debounce
+                val dt = now - lastGestureTime
+                if (dt < 600 && lastGestureType == GESTURE_DOUBLE_TAP) {
+                    gestureActionListener?.onEmergencyCall()
+                    speakFeedback("紧急呼叫")
+                    lastGestureTime = 0L
+                    return true
+                }
+                lastGestureTime = now
+                lastGestureType = GESTURE_DOUBLE_TAP
+                return true
             }
         }
-    }
 
-    private fun processViewInteraction(event: AccessibilityEvent, action: String) {
-        val source = event.source
-        if (source != null) {
-            eventListener?.onNodeInteracted(source, action)
-        }
-    }
+        // Fallback: 3-finger swipe using raw motion (API < R)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && gestureEvent.displayLocation != null) {
+            val y = gestureEvent.displayLocation!!.y
+            val timeSinceLast = now - lastGestureTime
 
-    private fun processTextChange(event: AccessibilityEvent) {
-        val text = event.text?.joinToString("")
-        if (!text.isNullOrEmpty()) {
-            Log.d(TAG, "Text changed: $text")
-        }
-    }
-
-    private fun handleMissingLabel(source: AccessibilityNodeInfo) {
-        missingLabelCount++
-        prefs.edit().putLong(KEY_MISSING_LABEL_COUNT, missingLabelCount).apply()
-
-        val viewId = source.viewIdResourceName
-        val className = source.className?.toString()
-        val bounds = android.graphics.Rect()
-        source.getBoundsInScreen(bounds)
-
-        Log.d(TAG, "Missing label #$missingLabelCount: viewId=$viewId, class=$className, bounds=$bounds")
-
-        if (ttsEnabled && tts != null && missingLabelCount <= 5) {
-            val hint = when {
-                source.isClickable -> "未标记的可点击按钮"
-                source.isEditable -> "未标记的输入框"
-                className?.contains("Image") == true -> "未标记的图片"
-                className?.contains("Button") == true -> "未标记的按钮"
-                else -> "未标记的界面元素"
+            if (gestureEvent.gestureId == AccessibilityGestureEvent.GESTURE_SWIPE_DOWN) {
+                gestureStartY = y
+                lastGestureTime = now
+                lastGestureType = GESTURE_SWIPE_DOWN
+                return true
             }
-            try {
-                tts?.speak(hint, TextToSpeech.QUEUE_FLUSH, null, "missing_label_$missingLabelCount")
-            } catch (_: Exception) {}
+
+            if (gestureEvent.gestureId == AccessibilityGestureEvent.GESTURE_SWIPE_UP) {
+                val dy = gestureStartY - y
+                if (dy > gestureSwipeThreshold && lastGestureType == GESTURE_SWIPE_DOWN) {
+                    // Actually a downward swipe completed
+                    gestureActionListener?.onSubtitleToggle()
+                    speakFeedback("字幕")
+                } else if (dy < -gestureSwipeThreshold && lastGestureType == GESTURE_SWIPE_UP) {
+                    gestureActionListener?.onTtsPanelOpen()
+                    speakFeedback("语音播报")
+                }
+                lastGestureTime = 0L
+                return true
+            }
         }
+
+        return false
     }
 
     override fun onInterrupt() {
-        Log.d(TAG, "Accessibility service interrupted")
+        Log.d(TAG, "Service interrupted by user")
+        stopAudioCapture()
+        tts?.stop()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        clearNodeCache()
+        stopAudioCapture()
         tts?.stop()
         tts?.shutdown()
         tts = null
         instance = null
-        Log.d(TAG, "Accessibility service destroyed")
+        Log.d(TAG, "Service destroyed")
     }
 
-    fun setTtsEnabled(enabled: Boolean) {
-        ttsEnabled = enabled
-        prefs.edit().putBoolean(KEY_TTS_ENABLED, enabled).apply()
-        if (!enabled) {
-            tts?.stop()
-            tts?.shutdown()
-            tts = null
-        } else if (tts == null) {
-            initTtsIfNeeded()
+    // === TalkBack Coordination ===
+
+    private fun checkTalkBackState() {
+        val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager ?: return
+        val enabledServices = try {
+            val settingValue = android.provider.Settings.Secure.getString(
+                contentResolver,
+                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            )
+            settingValue ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+        val wasRunning = isTalkBackRunning
+        isTalkBackRunning = enabledServices.contains("talkback", ignoreCase = true) ||
+                enabledServices.contains("TalkBack", ignoreCase = true)
+        talkBackCheckPending = false
+
+        if (wasRunning != isTalkBackRunning) {
+            Log.d(TAG, "TalkBack state changed: $wasRunning → $isTalkBackRunning")
         }
     }
 
-    fun isTtsEnabled(): Boolean = ttsEnabled
+    // === Unlabeled Control Detection ===
 
-    fun getMissingLabelCount(): Long = missingLabelCount
+    private fun processFocusEvent(event: AccessibilityEvent) {
+        val source = event.source ?: return
 
-    fun speakText(text: String) {
-        if (!ttsEnabled || tts == null) return
+        // If TalkBack is running, only supplement — never replace
+        if (isTalkBackRunning) {
+            supplementTalkBack(source)
+        } else {
+            // TalkBack disabled — we could provide basic reading in the future
+            // For now, just log
+        }
+
+        eventListener?.onNodeInteracted(source, "focus")
+    }
+
+    private fun supplementTalkBack(node: AccessibilityNodeInfo) {
+        val contentDesc = node.contentDescription?.toString()?.trim()
+        val text = node.text?.toString()?.trim()
+        val hint = node.hintText?.toString()?.trim()
+
+        // If has contentDescription, TalkBack handles it — don't interfere
+        if (!contentDesc.isNullOrEmpty()) return
+
+        // Try fallback sources in order: text → hint → nothing
+        val supplementaryText = when {
+            !text.isNullOrEmpty() -> text
+            !hint.isNullOrEmpty() -> hint
+            else -> return // Nothing useful, don't speak garbage
+        }
+
+        // Only speak if TTS is initialized
+        if (tts == null) return
+
         try {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "speak_${System.currentTimeMillis()}")
+            tts?.speak(
+                supplementaryText,
+                TextToSpeech.QUEUE_ADD, // QUEUE_ADD to not interrupt TalkBack
+                null,
+                "supplement_${System.currentTimeMillis()}"
+            )
+            Log.d(TAG, "TalkBack supplement: '$supplementaryText' for ${node.className}")
         } catch (_: Exception) {}
     }
 
-    fun setEventListener(listener: AccessibilityEventListener?) {
-        this.eventListener = listener
+    // === AudioPlaybackCapture ===
+
+    fun tryCaptureAudioPlayback(projection: MediaProjection? = null) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        if (projection == null) {
+            Log.d(TAG, "AudioCapture: no MediaProjection available, skip")
+            return
+        }
+
+        try {
+            val config = AudioPlaybackCaptureConfiguration.Builder(projection)
+                .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
+                .addMatchingUsage(AudioAttributes.USAGE_GAME)
+                .excludeUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .build()
+
+            val bufferSize = AudioRecord.getMinBufferSize(
+                16000,
+                android.media.AudioFormat.CHANNEL_IN_MONO,
+                android.media.AudioFormat.ENCODING_PCM_16BIT
+            )
+
+            audioRecord = AudioRecord.Builder()
+                .setAudioPlaybackCaptureConfig(config)
+                .setAudioFormat(android.media.AudioFormat.Builder()
+                    .setSampleRate(16000)
+                    .setChannelMask(android.media.AudioFormat.CHANNEL_IN_MONO)
+                    .setEncoding(android.media.AudioFormat.ENCODING_PCM_16BIT)
+                    .build())
+                .setBufferSizeInBytes(bufferSize * 2)
+                .build()
+
+            audioRecord?.startRecording()
+            Log.d(TAG, "Audio capture started")
+        } catch (e: Exception) {
+            Log.w(TAG, "Audio capture not allowed, target app denied it — silent fail", e)
+            audioRecord = null
+        }
     }
 
-    fun performClick(nodeId: Int): Boolean {
-        val source = findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)
-        return source?.performAction(AccessibilityNodeInfo.ACTION_CLICK) ?: false
+    fun stopAudioCapture() {
+        audioCaptureThread?.interrupt()
+        audioCaptureThread = null
+        try {
+            audioRecord?.stop()
+            audioRecord?.release()
+        } catch (_: Exception) {}
+        audioRecord = null
     }
 
-    fun performClickOnNode(node: AccessibilityNodeInfo): Boolean {
-        return node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+    // === Process events ===
+
+    private fun processViewInteraction(event: AccessibilityEvent) {
+        val source = event.source ?: return
+        val action = when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> "click"
+            AccessibilityEvent.TYPE_VIEW_LONG_CLICKED -> "long_click"
+            else -> "interact"
+        }
+        eventListener?.onNodeInteracted(source, action)
+
+        // Detect media playback start
+        val packageName = event.packageName?.toString() ?: ""
+        val className = event.className?.toString() ?: ""
+        if (className.contains("Media") || className.contains("Player") ||
+            className.contains("Video") || className.contains("Audio")) {
+            eventListener?.onMediaPlaybackDetected(packageName)
+        }
     }
 
-    fun performLongClick(node: AccessibilityNodeInfo): Boolean {
-        return node.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
+    private fun processWindowEvent(event: AccessibilityEvent) {
+        eventListener?.onWindowChange(event)
+        checkTalkBackState()
     }
 
-    fun performScrollForward(node: AccessibilityNodeInfo): Boolean {
-        return node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+    private fun processTextChange(event: AccessibilityEvent) {
+        val text = event.text?.joinToString("") ?: return
+        Log.d(TAG, "Text changed: ${text.take(80)}")
     }
 
-    fun performScrollBackward(node: AccessibilityNodeInfo): Boolean {
-        return node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+    // === TTS helpers ===
+
+    private fun initTts() {
+        if (tts != null) return
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.language = Locale.getDefault()
+                Log.d(TAG, "TTS ready")
+            } else {
+                Log.w(TAG, "TTS init failed, status=$status")
+                tts = null
+            }
+        }
     }
 
-    fun performGlobalBack(): Boolean {
-        return performGlobalAction(GLOBAL_ACTION_BACK)
+    fun speakFeedback(message: String) {
+        if (tts == null) return
+        try {
+            tts?.speak(message, TextToSpeech.QUEUE_FLUSH, null, "feedback_${System.currentTimeMillis()}")
+        } catch (_: Exception) {}
     }
 
-    fun performGlobalHome(): Boolean {
-        return performGlobalAction(GLOBAL_ACTION_HOME)
+    fun speakText(text: String) {
+        if (tts == null) return
+        try {
+            tts?.speak(text, TextToSpeech.QUEUE_ADD, null, "speak_${System.currentTimeMillis()}")
+        } catch (_: Exception) {}
     }
 
-    fun performGlobalRecents(): Boolean {
-        return performGlobalAction(GLOBAL_ACTION_RECENTS)
-    }
+    // === Node manipulation utilities ===
+
+    fun performClickOnNode(node: AccessibilityNodeInfo): Boolean =
+        node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+
+    fun performLongClick(node: AccessibilityNodeInfo): Boolean =
+        node.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
+
+    fun performScrollForward(node: AccessibilityNodeInfo): Boolean =
+        node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
+
+    fun performScrollBackward(node: AccessibilityNodeInfo): Boolean =
+        node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
+
+    fun performGlobalBack(): Boolean = performGlobalAction(GLOBAL_ACTION_BACK)
+    fun performGlobalHome(): Boolean = performGlobalAction(GLOBAL_ACTION_HOME)
+    fun performGlobalRecents(): Boolean = performGlobalAction(GLOBAL_ACTION_RECENTS)
 
     fun performGlobalNotifications(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
-        } else {
-            false
-        }
+        } else false
     }
 
     fun performGlobalQuickSettings(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
-        } else {
-            false
-        }
+        } else false
     }
 
-    fun performGesture(x: Float, y: Float, duration: Long = 100): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false
+    fun findNodeByText(text: String): AccessibilityNodeInfo? =
+        rootInActiveWindow?.findAccessibilityNodeInfosByText(text)?.firstOrNull()
 
-        val path = Path().apply {
-            moveTo(x, y)
-        }
-        val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, duration))
-            .build()
-
-        return dispatchGesture(gesture, null, null)
-    }
-
-    fun performSwipe(
-        startX: Float, startY: Float,
-        endX: Float, endY: Float,
-        duration: Long = 300
-    ): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false
-
-        val path = Path().apply {
-            moveTo(startX, startY)
-            lineTo(endX, endY)
-        }
-        val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, duration))
-            .build()
-
-        return dispatchGesture(gesture, null, null)
-    }
-
-    fun findNodeByText(text: String): AccessibilityNodeInfo? {
-        return rootInActiveWindow?.findAccessibilityNodeInfosByText(text)?.firstOrNull()
-    }
-
-    fun findNodeByViewId(viewId: String): AccessibilityNodeInfo? {
-        return rootInActiveWindow?.findAccessibilityNodeInfosByViewId(viewId)?.firstOrNull()
-    }
+    fun findNodeByViewId(viewId: String): AccessibilityNodeInfo? =
+        rootInActiveWindow?.findAccessibilityNodeInfosByViewId(viewId)?.firstOrNull()
 
     fun getAllNodes(): List<AccessibilityNodeInfo> {
         val nodes = mutableListOf<AccessibilityNodeInfo>()
@@ -313,23 +456,16 @@ class AccessibleService : AccessibilityService() {
         }
     }
 
-    private fun clearNodeCache() {
-        nodeCache.values.forEach { it.recycle() }
-        nodeCache.clear()
-    }
-
-    fun getNodeInfo(node: AccessibilityNodeInfo): NodeInfo {
-        return NodeInfo(
-            packageName = node.packageName?.toString(),
-            className = node.className?.toString(),
-            text = node.text?.toString(),
-            contentDescription = node.contentDescription?.toString(),
-            viewId = node.viewIdResourceName,
-            isClickable = node.isClickable,
-            isScrollable = node.isScrollable,
-            isEnabled = node.isEnabled
-        )
-    }
+    fun getNodeInfo(node: AccessibilityNodeInfo): NodeInfo = NodeInfo(
+        packageName = node.packageName?.toString(),
+        className = node.className?.toString(),
+        text = node.text?.toString(),
+        contentDescription = node.contentDescription?.toString(),
+        viewId = node.viewIdResourceName,
+        isClickable = node.isClickable,
+        isScrollable = node.isScrollable,
+        isEnabled = node.isEnabled
+    )
 
     data class NodeInfo(
         val packageName: String?,

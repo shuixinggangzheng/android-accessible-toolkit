@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="accessibility_service_desc">用于显示实时字幕和增强 TalkBack 朗读</string>
     <string name="accessibility_service_description">无障碍辅助工具，帮助用户获取界面标签信息并提供语音反馈</string>
     <string name="privacy_policy_title">隐私政策与数据使用声明</string>
     <string name="privacy_policy_full">
