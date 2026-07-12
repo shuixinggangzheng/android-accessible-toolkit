@@ -2,7 +2,6 @@ package com.accessible.toolkit.app
 
 import android.animation.ValueAnimator
 import android.app.AlertDialog
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -27,11 +26,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.ImageView
-import android.widget.RemoteViews
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.app.NotificationCompat
 import com.accessible.toolkit.bridge.BridgeService
 import com.accessible.toolkit.elder.MedicationReminder
 import com.accessible.toolkit.subtitle.SubtitleService
@@ -76,6 +72,8 @@ class QuickBallService : Service() {
     // Long press tracking
     private var pressStartTime = 0L
     private var isLongPressTriggered = false
+    private lateinit var notifManager: ToolkitNotificationManager
+    private var currentServiceState = ToolkitNotificationManager.ServiceState.IDLE
 
     enum class BallColor {
         GREEN, BLUE, GRAY
@@ -85,8 +83,9 @@ class QuickBallService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        notifManager = ToolkitNotificationManager(this)
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification())
+        startForeground(NOTIFICATION_ID, notifManager.buildNotification(currentServiceState))
         createBallView()
         registerStateListener()
     }
@@ -99,23 +98,42 @@ class QuickBallService : Service() {
         SubtitleService.setStateListener(object : SubtitleService.ServiceStateListener {
             override fun onStateChanged(running: Boolean, paused: Boolean) {
                 updateBallColor(running, paused)
-                updateNotificationPanel()
+                val newState = when {
+                    !running -> ToolkitNotificationManager.ServiceState.IDLE
+                    paused -> ToolkitNotificationManager.ServiceState.PAUSED
+                    else -> ToolkitNotificationManager.ServiceState.LISTENING
+                }
+                currentServiceState = newState
+                notifManager.update(newState)
+                if (running && !paused) ToolkitNotificationManager.markAsrActive()
+                else ToolkitNotificationManager.resetAsrActive()
             }
         })
 
         BridgeService.setServiceListener(object : BridgeService.ServiceListener {
             override fun onStateChanged(running: Boolean) {
-                updateNotificationPanel()
+                ToolkitNotificationManager.setBridgeClientCount(if (running) 1 else 0)
+                notifManager.update(currentServiceState)
             }
-            override fun onTranscriptUpdate(text: String, isFinal: Boolean) {}
-            override fun onVadStateChange(state: com.accessible.toolkit.bridge.SubtitleWebSocketServer.VadState) {}
+            override fun onTranscriptUpdate(text: String, isFinal: Boolean) {
+                if (isFinal) ToolkitNotificationManager.setLastTranscript(text)
+                notifManager.update(currentServiceState)
+            }
+            override fun onVadStateChange(state: com.accessible.toolkit.bridge.SubtitleWebSocketServer.VadState) {
+                when (state) {
+                    com.accessible.toolkit.bridge.SubtitleWebSocketServer.VadState.VOICE_START -> {
+                        currentServiceState = ToolkitNotificationManager.ServiceState.TRANSCRIBING
+                        ToolkitNotificationManager.markAsrActive()
+                    }
+                    com.accessible.toolkit.bridge.SubtitleWebSocketServer.VadState.VOICE_END,
+                    com.accessible.toolkit.bridge.SubtitleWebSocketServer.VadState.SILENCE -> {
+                        currentServiceState = ToolkitNotificationManager.ServiceState.LISTENING
+                    }
+                }
+                notifManager.update(currentServiceState)
+            }
             override fun onServerAddressChanged(ip: String, httpPort: Int) {}
         })
-    }
-
-    private fun updateNotificationPanel() {
-        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID, createNotification())
     }
 
     private fun updateBallColor(running: Boolean, paused: Boolean) {
@@ -445,67 +463,12 @@ class QuickBallService : Service() {
                 "快捷悬浮球",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "快捷操作悬浮球"
+                description = "无障碍助手常驻通知"
                 setShowBadge(false)
             }
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
-    }
-
-    private fun createNotification(): Notification {
-        val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val remoteViews = RemoteViews(packageName, R.layout.layout_notification_panel)
-        val subtitleRunning = SubtitleService.isRunning
-        val bridgeRunning = BridgeService.isRunning
-
-        remoteViews.setImageViewResource(R.id.iv_toggle_subtitle,
-            if (subtitleRunning) android.R.drawable.ic_btn_speak_now
-            else android.R.drawable.ic_lock_silence_mode)
-        remoteViews.setTextViewText(R.id.tv_status_text,
-            when {
-                subtitleRunning && bridgeRunning -> "字幕 + PC字幕运行中"
-                subtitleRunning -> "字幕监听中"
-                bridgeRunning -> "PC字幕运行中"
-                else -> "字幕已关闭"
-            })
-
-        remoteViews.setOnClickPendingIntent(R.id.iv_toggle_subtitle,
-            createToggleIntent("subtitle"))
-        remoteViews.setOnClickPendingIntent(R.id.iv_toggle_bridge,
-            createToggleIntent("bridge"))
-        remoteViews.setOnClickPendingIntent(R.id.iv_emergency,
-            createEmergencyIntent())
-
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(remoteViews)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .build()
-    }
-
-    private fun createToggleIntent(type: String): PendingIntent {
-        val intent = Intent(this, NotificationActionReceiver::class.java).apply {
-            action = "com.accessible.toolkit.NOTIFICATION_TOGGLE"
-            putExtra("toggle_type", type)
-        }
-        return PendingIntent.getBroadcast(this, type.hashCode(), intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-
-    private fun createEmergencyIntent(): PendingIntent {
-        val intent = Intent(this, NotificationActionReceiver::class.java).apply {
-            action = "com.accessible.toolkit.EMERGENCY"
-        }
-        return PendingIntent.getBroadcast(this, 9999, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
     private fun Int.dpToPx(): Int {
