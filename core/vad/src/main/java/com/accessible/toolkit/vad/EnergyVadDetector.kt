@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.accessible.toolkit.engine.VadCallback
 import com.accessible.toolkit.engine.VadDetector
+import java.util.concurrent.atomic.AtomicBoolean
 
 class EnergyVadDetector(
     private val context: Context,
@@ -32,20 +33,24 @@ class EnergyVadDetector(
     private var recordingThread: Thread? = null
 
     // 状态
+    @Volatile
     private var isVoiceActive = false
+    @Volatile
     private var consecutiveVoiceFrames = 0
+    @Volatile
     private var consecutiveSilenceFrames = 0
     private var silenceStartTime = 0L
     private var lastSilenceDurationReport = -1
 
     // 噪声校准
+    @Volatile
     private var isCalibrating = true
     private var calibrationFrames = 0
     private var noiseFloorSum = 0.0
+    @Volatile
     private var noiseFloor = 0.0
+    @Volatile
     private var voiceThreshold = 0.0
-
-    private val atomicBooleanClass = AtomicBoolean::class.java
 
     override fun start() {
         if (running.get()) return
@@ -233,21 +238,3 @@ class EnergyVadDetector(
     fun getVoiceThreshold(): Double = voiceThreshold
 }
 
-private class AtomicBoolean(initialValue: Boolean) {
-    @Volatile
-    private var value = initialValue
-
-    fun get(): Boolean = value
-
-    fun set(newValue: Boolean) {
-        value = newValue
-    }
-
-    fun compareAndSet(expected: Boolean, new: Boolean): Boolean {
-        if (value == expected) {
-            value = new
-            return true
-        }
-        return false
-    }
-}

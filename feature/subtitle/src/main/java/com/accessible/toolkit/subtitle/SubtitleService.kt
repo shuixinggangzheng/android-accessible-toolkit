@@ -65,6 +65,7 @@ class SubtitleService : Service() {
     private var vadDetector: EnergyVadDetector? = null
     private var floatingView: FloatingSubtitleView? = null
     private var actionReceiver: BroadcastReceiver? = null
+    private var asrReady = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -96,6 +97,7 @@ class SubtitleService : Service() {
     }
 
     private fun startSubtitle() {
+        asrReady = false
         asrEngine = VoskAsrEngine(this).apply {
             setCallback(createAsrCallback())
             loadDefaultModel()
@@ -103,7 +105,6 @@ class SubtitleService : Service() {
 
         vadDetector = EnergyVadDetector(this).apply {
             setCallback(createVadCallback())
-            start()
         }
 
         floatingView?.show()
@@ -128,7 +129,10 @@ class SubtitleService : Service() {
     private fun resumeService() {
         if (!isRunning || !isPaused) return
 
-        vadDetector?.start()
+        if (asrReady) {
+            vadDetector?.recalibrate()
+            vadDetector?.start()
+        }
         isPaused = false
         updateNotification()
         floatingView?.showResumed()
@@ -164,6 +168,9 @@ class SubtitleService : Service() {
 
             override fun onReady() {
                 Log.d(TAG, "ASR engine ready")
+                asrReady = true
+                // 模型就绪后再启动 VAD
+                vadDetector?.start()
             }
         }
     }

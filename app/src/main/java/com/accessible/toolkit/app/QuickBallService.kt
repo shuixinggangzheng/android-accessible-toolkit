@@ -1,6 +1,7 @@
 package com.accessible.toolkit.app
 
 import android.animation.ValueAnimator
+import android.app.AlertDialog
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +15,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -23,7 +27,10 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.RemoteViews
+import android.widget.TextView
 import androidx.core.app.NotificationCompat
+import com.accessible.toolkit.elder.MedicationReminder
 import com.accessible.toolkit.subtitle.SubtitleService
 
 class QuickBallService : Service() {
@@ -31,8 +38,9 @@ class QuickBallService : Service() {
     companion object {
         private const val TAG = "QuickBallService"
         private const val CHANNEL_ID = "quick_ball_channel"
-        private const val NOTIFICATION_ID = 1002
-        private const val LONG_PRESS_DURATION = 500L
+        private const val NOTIFICATION_ID = 1003
+        private const val LONG_PRESS_DURATION = 1500L // 1.5s for emergency call
+        private const val MIN_PRESS_DURATION = 200L // 200ms minimum to prevent accident
 
         const val ACTION_START = "com.accessible.toolkit.QUICK_BALL_START"
 
@@ -61,6 +69,10 @@ class QuickBallService : Service() {
     private var longPressRunnable: Runnable? = null
     private var pulseAnimator: ValueAnimator? = null
     private var currentBallColor = BallColor.BLUE
+
+    // Long press tracking
+    private var pressStartTime = 0L
+    private var isLongPressTriggered = false
 
     enum class BallColor {
         GREEN, BLUE, GRAY
@@ -139,10 +151,17 @@ class QuickBallService : Service() {
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
                     isDragging = false
+                    isLongPressTriggered = false
+                    pressStartTime = System.currentTimeMillis()
 
                     longPressRunnable = Runnable {
-                        if (!isDragging) {
-                            onBallLongPress()
+                        if (!isDragging && !isLongPressTriggered) {
+                            val pressDuration = System.currentTimeMillis() - pressStartTime
+                            if (pressDuration >= MIN_PRESS_DURATION) {
+                                isLongPressTriggered = true
+                                vibrate()
+                                onBallLongPress()
+                            }
                         }
                     }
                     handler.postDelayed(longPressRunnable!!, LONG_PRESS_DURATION)
@@ -164,8 +183,13 @@ class QuickBallService : Service() {
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     handler.removeCallbacks(longPressRunnable!!)
-                    if (!isDragging) {
-                        onBallClick()
+                    if (!isDragging && !isLongPressTriggered) {
+                        val pressDuration = System.currentTimeMillis() - pressStartTime
+                        if (pressDuration < MIN_PRESS_DURATION) {
+                            // Too short, ignore
+                        } else {
+                            onBallClick()
+                        }
                     }
                     true
                 }
@@ -183,23 +207,54 @@ class QuickBallService : Service() {
     }
 
     private fun onBallLongPress() {
-        val emergencyNumber = getEmergencyNumber()
-        if (emergencyNumber != null) {
-            val intent = Intent(Intent.ACTION_CALL).apply {
-                data = android.net.Uri.parse("tel:$emergencyNumber")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            try {
-                startActivity(intent)
-            } catch (e: SecurityException) {
-                Log.e(TAG, "Failed to make emergency call", e)
-            }
+        val reminder = MedicationReminder(this)
+        val contacts = reminder.getEmergencyContacts()
+
+        if (contacts.isEmpty()) {
+            return
+        }
+
+        if (contacts.size == 1) {
+            showConfirmAndCall(contacts[0].name, contacts[0].phoneNumber)
+        } else {
+            showContactSelectionDialog(contacts)
         }
     }
 
-    private fun getEmergencyNumber(): String? {
-        val prefs = getSharedPreferences("emergency", MODE_PRIVATE)
-        return prefs.getString("phone_number", null)
+    private fun showContactSelectionDialog(contacts: List<MedicationReminder.EmergencyContact>) {
+        val names = contacts.map { "${it.name} (${it.phoneNumber})" }.toTypedArray()
+
+        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
+            .setTitle("选择紧急联系人")
+            .setItems(names) { _, which ->
+                val contact = contacts[which]
+                showConfirmAndCall(contact.name, contact.phoneNumber)
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showConfirmAndCall(name: String, phoneNumber: String) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_emergency_call, null)
+        dialogView.findViewById<TextView>(R.id.tv_contact_name)?.text = name
+        dialogView.findViewById<TextView>(R.id.tv_contact_phone)?.text = phoneNumber
+
+        AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
+            .setView(dialogView)
+            .setPositiveButton("拨打") { _, _ ->
+                val intent = Intent(Intent.ACTION_CALL).apply {
+                    data = android.net.Uri.parse("tel:$phoneNumber")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                try {
+                    startActivity(intent)
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "Failed to make emergency call", e)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .setCancelable(true)
+            .show()
     }
 
     private fun showPanel() {
@@ -326,6 +381,19 @@ class QuickBallService : Service() {
         pulseAnimator = null
         ballView?.scaleX = 1.0f
         ballView?.scaleY = 1.0f
+    }
+
+    private fun vibrate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            val vibrator = vibratorManager.defaultVibrator
+            vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
     }
 
     private fun createNotificationChannel() {

@@ -19,9 +19,6 @@ class PermissionManager(private val activity: Activity) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                add(Manifest.permission.FOREGROUND_SERVICE_MICROPHONE)
-            }
         }.toTypedArray()
 
         fun hasOverlayPermission(context: Context): Boolean {

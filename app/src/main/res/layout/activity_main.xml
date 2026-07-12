@@ -1,78 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/elder_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp"
+        android:padding="@dimen/elder_padding_large"
         android:gravity="center">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="无障碍辅助工具"
-            android:textSize="28sp"
+            android:textSize="@dimen/elder_text_size_title"
             android:textStyle="bold"
-            android:layout_marginBottom="32dp" />
+            android:textColor="@color/elder_text_primary"
+            android:layout_marginBottom="@dimen/elder_padding_xlarge"
+            android:contentDescription="应用标题：无障碍辅助工具" />
 
         <Button
             android:id="@+id/btn_subtitle"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/elder_button_height"
             android:text="听障字幕"
-            android:textSize="18sp"
-            android:layout_marginBottom="12dp" />
+            android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:contentDescription="点击开启或关闭听障字幕功能"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text" />
 
         <Button
             android:id="@+id/btn_voice_assist"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/elder_button_height"
             android:text="语障辅助"
-            android:textSize="18sp"
-            android:layout_marginBottom="12dp" />
+            android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:contentDescription="点击打开语障辅助功能"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text" />
+
+        <Button
+            android:id="@+id/btn_voice_output"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/elder_button_height"
+            android:text="文字转语音"
+            android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:contentDescription="点击打开文字转语音功能"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text" />
 
         <Button
             android:id="@+id/btn_communication"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/elder_button_height"
             android:text="双向沟通"
-            android:textSize="18sp"
-            android:layout_marginBottom="12dp" />
+            android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:contentDescription="点击打开双向沟通功能"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text" />
 
         <Button
             android:id="@+id/btn_medication_reminder"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/elder_button_height"
             android:text="服药提醒"
-            android:textSize="18sp"
-            android:layout_marginBottom="12dp" />
+            android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:contentDescription="点击打开服药提醒功能"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text" />
 
         <Button
             android:id="@+id/btn_emergency_call"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/elder_button_height"
             android:text="一键呼叫"
-            android:textSize="18sp"
-            android:layout_marginBottom="12dp" />
+            android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:contentDescription="点击打开紧急呼叫功能"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text" />
 
         <Button
             android:id="@+id/btn_web_bridge"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/elder_button_height"
             android:text="跨设备字幕"
-            android:textSize="18sp"
-            android:layout_marginBottom="24dp" />
+            android:textSize="@dimen/elder_text_size_body"
+            android:layout_marginBottom="@dimen/elder_padding_xlarge"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:contentDescription="点击打开跨设备字幕功能，连接电脑浏览器"
+            android:backgroundTint="@color/elder_button_background"
+            android:textColor="@color/elder_button_text" />
 
         <Button
             android:id="@+id/btn_accessibility_settings"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/elder_button_height"
             android:text="无障碍服务设置"
-            android:textSize="18sp"
-            android:backgroundTint="#FF6B6B" />
+            android:textSize="@dimen/elder_text_size_body"
+            android:minHeight="@dimen/elder_min_touch_target"
+            android:backgroundTint="@color/elder_primary_dark"
+            android:textColor="@color/elder_button_text"
+            android:contentDescription="点击打开系统无障碍服务设置" />
 
     </LinearLayout>
 

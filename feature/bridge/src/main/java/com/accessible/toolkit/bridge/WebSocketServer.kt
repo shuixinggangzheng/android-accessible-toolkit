@@ -25,6 +25,7 @@ class WebSocketServer(
     }
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
+        super.onOpen(conn, handshake)
         clients.add(conn)
         Log.d(TAG, "Client connected: ${conn.remoteSocketAddress}")
         listener?.onClientConnected(clients.size)

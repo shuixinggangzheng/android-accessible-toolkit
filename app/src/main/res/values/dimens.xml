@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Elder-friendly Text Sizes (40% larger than Material Design) -->
+    <dimen name="elder_text_size_title">28sp</dimen>
+    <dimen name="elder_text_size_body">22sp</dimen>
+    <dimen name="elder_text_size_caption">18sp</dimen>
+
+    <!-- Standard Text Sizes -->
+    <dimen name="text_size_title">20sp</dimen>
+    <dimen name="text_size_body">16sp</dimen>
+    <dimen name="text_size_caption">14sp</dimen>
+
+    <!-- Elder-friendly Touch Targets (exceeds 48dp Android standard) -->
+    <dimen name="elder_min_touch_target">56dp</dimen>
+    <dimen name="elder_button_height">64dp</dimen>
+
+    <!-- Standard Touch Targets -->
+    <dimen name="min_touch_target">48dp</dimen>
+    <dimen name="button_height">56dp</dimen>
+
+    <!-- Elder-friendly Spacing -->
+    <dimen name="elder_padding_small">8dp</dimen>
+    <dimen name="elder_padding_medium">16dp</dimen>
+    <dimen name="elder_padding_large">24dp</dimen>
+    <dimen name="elder_padding_xlarge">32dp</dimen>
+
+    <!-- Standard Spacing -->
+    <dimen name="padding_small">4dp</dimen>
+    <dimen name="padding_medium">8dp</dimen>
+    <dimen name="padding_large">16dp</dimen>
+
+    <!-- Elder-friendly Corner Radius -->
+    <dimen name="elder_corner_radius">8dp</dimen>
+    <dimen name="elder_corner_radius_large">12dp</dimen>
+
+    <!-- Standard Corner Radius -->
+    <dimen name="corner_radius">4dp</dimen>
+    <dimen name="corner_radius_large">8dp</dimen>
+
+    <!-- Elder-friendly Elevation -->
+    <dimen name="elder_elevation">4dp</dimen>
+
+    <!-- Standard Elevation -->
+    <dimen name="elevation">2dp</dimen>
+
+    <!-- Elder-friendly Border Width -->
+    <dimen name="elder_border_width">2dp</dimen>
+</resources>

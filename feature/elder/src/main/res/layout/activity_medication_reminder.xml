@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/elder_background">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/elder_surface"
+        android:elevation="@dimen/elder_elevation" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/elder_padding_large">
+
+            <!-- Emergency Contacts Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:padding="@dimen/elder_padding_large"
+                android:layout_marginBottom="@dimen/elder_padding_large"
+                android:strokeColor="@color/elder_card_border"
+                android:strokeWidth="@dimen/elder_border_width">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="@dimen/elder_padding_medium">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="紧急呼叫"
+                        android:textSize="@dimen/elder_text_size_title"
+                        android:textStyle="bold"
+                        android:textColor="@color/elder_text_primary"
+                        android:contentDescription="紧急呼叫区域标题" />
+
+                    <TextView
+                        android:id="@+id/tv_contact_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="未设置紧急联系人"
+                        android:textSize="@dimen/elder_text_size_caption"
+                        android:textColor="@color/elder_text_secondary"
+                        android:contentDescription="紧急联系人状态" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="长按悬浮球1.5秒可一键拨打紧急电话"
+                    android:textSize="@dimen/elder_text_size_caption"
+                    android:textColor="@color/elder_text_hint"
+                    android:layout_marginBottom="@dimen/elder_padding_large"
+                    android:contentDescription="操作提示：长按悬浮球1.5秒可一键拨打紧急电话" />
+
+                <Button
+                    android:id="@+id/btn_add_contact"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/elder_button_height"
+                    android:text="从通讯录添加联系人"
+                    android:textSize="@dimen/elder_text_size_body"
+                    android:layout_marginBottom="@dimen/elder_padding_medium"
+                    android:minHeight="@dimen/elder_min_touch_target"
+                    android:backgroundTint="@color/elder_button_background"
+                    android:textColor="@color/elder_button_text"
+                    android:contentDescription="点击从通讯录添加紧急联系人" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_contacts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+            </LinearLayout>
+
+            <!-- Medication Reminders Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:padding="@dimen/elder_padding_large"
+                android:strokeColor="@color/elder_card_border"
+                android:strokeWidth="@dimen/elder_border_width">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="@dimen/elder_padding_medium">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="服药提醒"
+                        android:textSize="@dimen/elder_text_size_title"
+                        android:textStyle="bold"
+                        android:textColor="@color/elder_text_primary"
+                        android:contentDescription="服药提醒区域标题" />
+
+                    <TextView
+                        android:id="@+id/tv_reminder_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="暂无服药提醒"
+                        android:textSize="@dimen/elder_text_size_caption"
+                        android:textColor="@color/elder_text_secondary"
+                        android:contentDescription="服药提醒状态" />
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_add_reminder"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/elder_button_height"
+                    android:text="添加服药提醒"
+                    android:textSize="@dimen/elder_text_size_body"
+                    android:layout_marginBottom="@dimen/elder_padding_medium"
+                    android:minHeight="@dimen/elder_min_touch_target"
+                    android:backgroundTint="@color/elder_button_background"
+                    android:textColor="@color/elder_button_text"
+                    android:contentDescription="点击添加新的服药提醒" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_reminders"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

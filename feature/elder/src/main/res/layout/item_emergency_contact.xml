@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="@dimen/elder_padding_medium"
+    android:background="?attr/selectableItemBackground"
+    android:minHeight="@dimen/elder_min_touch_target">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_contact_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/elder_text_size_body"
+            android:textStyle="bold"
+            android:textColor="@color/elder_text_primary"
+            android:contentDescription="联系人姓名" />
+
+        <TextView
+            android:id="@+id/tv_contact_phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/elder_text_size_caption"
+            android:textColor="@color/elder_text_secondary"
+            android:layout_marginTop="@dimen/elder_padding_small"
+            android:contentDescription="联系人电话" />
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btn_call"
+        android:layout_width="@dimen/elder_min_touch_target"
+        android:layout_height="@dimen/elder_min_touch_target"
+        android:src="@android:drawable/sym_action_call"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="点击拨打此联系人电话"
+        android:layout_marginEnd="@dimen/elder_padding_medium"
+        android:scaleType="centerInside" />
+
+    <ImageButton
+        android:id="@+id/btn_delete"
+        android:layout_width="@dimen/elder_min_touch_target"
+        android:layout_height="@dimen/elder_min_touch_target"
+        android:src="@android:drawable/ic_menu_delete"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="删除此联系人"
+        android:scaleType="centerInside" />
+
+</LinearLayout>

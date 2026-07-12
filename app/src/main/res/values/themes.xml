@@ -1,11 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Standard Theme -->
     <style name="Theme.AccessibleToolkit" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <item name="colorPrimary">#FF6B6B</item>
-        <item name="colorPrimaryVariant">#FF5252</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorSecondary">#4ECDC4</item>
-        <item name="colorSecondaryVariant">#45B7AA</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_variant</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_variant</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+    </style>
+
+    <!-- Elder-friendly Theme with High Contrast -->
+    <style name="Theme.AccessibleToolkit.Elder" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary Colors -->
+        <item name="colorPrimary">@color/elder_primary</item>
+        <item name="colorPrimaryVariant">@color/elder_primary_dark</item>
+        <item name="colorOnPrimary">@color/elder_on_primary</item>
+
+        <!-- Secondary Colors -->
+        <item name="colorSecondary">@color/elder_primary_light</item>
+        <item name="colorSecondaryVariant">@color/elder_primary</item>
+        <item name="colorOnSecondary">@color/elder_on_primary</item>
+
+        <!-- Background and Surface -->
+        <item name="android:colorBackground">@color/elder_background</item>
+        <item name="colorSurface">@color/elder_surface</item>
+        <item name="colorError">@color/elder_error</item>
+
+        <!-- Text Colors -->
+        <item name="android:textColorPrimary">@color/elder_text_primary</item>
+        <item name="android:textColorSecondary">@color/elder_text_secondary</item>
+        <item name="android:textColorHint">@color/elder_text_hint</item>
+
+        <!-- On Background/Surface/Error -->
+        <item name="colorOnBackground">@color/elder_on_background</item>
+        <item name="colorOnSurface">@color/elder_on_surface</item>
+        <item name="colorOnError">@color/elder_on_error</item>
+
+        <!-- Button Styles -->
+        <item name="materialButtonStyle">@style/Widget.Elder.Button</item>
+
+        <!-- Card View -->
+        <item name="cardViewStyle">@style/Widget.Elder.CardView</item>
+
+        <!-- Status Bar -->
+        <item name="android:statusBarColor">@color/elder_primary_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Elder Button Style -->
+    <style name="Widget.Elder.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:textSize">@dimen/elder_text_size_body</item>
+        <item name="android:minHeight">@dimen/elder_min_touch_target</item>
+        <item name="android:paddingTop">@dimen/elder_padding_medium</item>
+        <item name="android:paddingBottom">@dimen/elder_padding_medium</item>
+        <item name="android:paddingStart">@dimen/elder_padding_large</item>
+        <item name="android:paddingEnd">@dimen/elder_padding_large</item>
+        <item name="backgroundTint">@color/elder_button_background</item>
+        <item name="android:textColor">@color/elder_button_text</item>
+        <item name="cornerRadius">@dimen/elder_corner_radius</item>
+        <item name="elevation">@dimen/elder_elevation</item>
+        <item name="strokeColor">@color/elder_border</item>
+        <item name="strokeWidth">2dp</item>
+    </style>
+
+    <!-- Elder CardView Style -->
+    <style name="Widget.Elder.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardCornerRadius">@dimen/elder_corner_radius_large</item>
+        <item name="cardElevation">@dimen/elder_elevation</item>
+        <item name="strokeColor">@color/elder_card_border</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="contentPadding">@dimen/elder_padding_large</item>
+        <item name="cardBackgroundColor">@color/elder_card_background</item>
+    </style>
+
+    <!-- Elder TextView Style -->
+    <style name="Widget.Elder.TextView.Title" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">@dimen/elder_text_size_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/elder_text_primary</item>
+    </style>
+
+    <style name="Widget.Elder.TextView.Body" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">@dimen/elder_text_size_body</item>
+        <item name="android:textColor">@color/elder_text_primary</item>
+    </style>
+
+    <style name="Widget.Elder.TextView.Caption" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textSize">@dimen/elder_text_size_caption</item>
+        <item name="android:textColor">@color/elder_text_secondary</item>
     </style>
 </resources>

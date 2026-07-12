@@ -72,6 +72,10 @@ class VoskAsrEngine(private val context: Context) : AsrEngine {
         }
 
         try {
+            // 先释放旧的实例防止泄漏
+            speechService?.shutdown()
+            recognizer?.close()
+
             recognizer = Recognizer(currentModel, SAMPLE_RATE)
             speechService = SpeechService(recognizer, SAMPLE_RATE)
 

@@ -95,6 +95,15 @@ class SubtitleViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun startListening(modelPath: String? = null) {
+        // If SubtitleService is already running, use it instead of creating duplicate engines
+        if (SubtitleService.isRunning) {
+            isPausedState = false
+            _isPaused.value = false
+            _isVoiceActive.value = false
+            _silenceDuration.value = 0
+            return
+        }
+
         isPausedState = false
         _isPaused.value = false
         _isVoiceActive.value = false
@@ -109,6 +118,8 @@ class SubtitleViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun stopListening() {
+        if (SubtitleService.isRunning) return
+
         vadDetector.stop()
         asrEngine.stopListening()
         _isListening.value = false

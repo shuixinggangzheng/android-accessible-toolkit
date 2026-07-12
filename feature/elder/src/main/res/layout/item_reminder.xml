@@ -4,32 +4,77 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="12dp"
-    android:background="?attr/selectableItemBackground">
+    android:padding="@dimen/elder_padding_medium"
+    android:background="?attr/selectableItemBackground"
+    android:minHeight="@dimen/elder_min_touch_target">
 
-    <TextView
-        android:id="@+id/tv_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#333333"
-        android:layout_marginEnd="16dp" />
-
-    <TextView
-        android:id="@+id/tv_medication_name"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="18sp"
-        android:textColor="#666666" />
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_medication_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/elder_text_size_body"
+            android:textStyle="bold"
+            android:textColor="@color/elder_text_primary"
+            android:contentDescription="药物名称" />
+
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/elder_text_size_body"
+            android:textColor="@color/elder_primary"
+            android:layout_marginTop="@dimen/elder_padding_small"
+            android:contentDescription="提醒时间" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="@dimen/elder_padding_small">
+
+            <TextView
+                android:id="@+id/tv_dosage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/elder_text_size_caption"
+                android:textColor="@color/elder_text_secondary"
+                android:layout_marginEnd="@dimen/elder_padding_large"
+                android:contentDescription="剂量说明" />
+
+            <TextView
+                android:id="@+id/tv_repeat_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/elder_text_size_caption"
+                android:textColor="@color/elder_text_hint"
+                android:contentDescription="重复模式" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <android.widget.Switch
+        android:id="@+id/toggle_enabled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/elder_padding_medium"
+        android:minHeight="@dimen/elder_min_touch_target"
+        android:minWidth="@dimen/elder_min_touch_target"
+        android:contentDescription="启用或禁用此提醒" />
 
     <ImageButton
         android:id="@+id/btn_delete"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="@dimen/elder_min_touch_target"
+        android:layout_height="@dimen/elder_min_touch_target"
         android:src="@android:drawable/ic_menu_delete"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="删除" />
+        android:contentDescription="删除此提醒"
+        android:scaleType="centerInside" />
 
 </LinearLayout>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>实时字幕</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #000000;
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex; flex-direction: column;
+    padding: 0; user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ===== Status Bar (10%) ===== */
+  #statusBar {
+    flex: 0 0 10%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 8px 16px;
+    gap: 12px;
+    min-height: 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  #statusDot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #F44336;
+    box-shadow: 0 0 6px currentColor;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  #statusDot.connected { background: #4CAF50; }
+  #statusText {
+    font-size: 14px; color: rgba(255,255,255,0.7);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 60%;
+  }
+  #ipDisplay {
+    font-size: 13px; color: rgba(255,255,255,0.4);
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+  }
+
+  /* ===== Subtitle Area (75%) ===== */
+  #subtitleArea {
+    flex: 1 1 75%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  #currentSubtitle {
+    font-size: 32px; font-weight: 600;
+    line-height: 1.5; text-align: center;
+    max-width: 100%; word-break: break-word;
+    opacity: 0;
+    transition: opacity 0.15s ease-in;
+  }
+  #currentSubtitle.show { opacity: 1; }
+  #currentSubtitle.partial { opacity: 0.5; }
+  #currentSubtitle.final { opacity: 1; color: #ffffff; }
+
+  /* ===== History Area (15%) ===== */
+  #historyArea {
+    flex: 0 0 15%;
+    padding: 8px 16px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    overflow-y: auto;
+    display: flex; flex-direction: column-reverse;
+    gap: 2px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 30%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 30%);
+  }
+  #historyArea .historyLine {
+    font-size: 18px; color: rgba(255,255,255,0.35);
+    line-height: 1.4; text-align: center;
+    transition: color 0.3s;
+  }
+  #historyArea .historyLine:first-child { color: rgba(255,255,255,0.6); }
+
+  /* ===== Error Banner ===== */
+  #errorBanner {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(244,67,54,0.9); color: #fff;
+    padding: 16px 24px; border-radius: 8px;
+    font-size: 16px; text-align: center;
+    display: none; z-index: 100;
+    max-width: 90%;
+  }
+  #errorBanner.show { display: block; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 480px) {
+    #currentSubtitle { font-size: 26px; }
+    #historyArea .historyLine { font-size: 15px; }
+    #statusText { font-size: 12px; }
+  }
+  @media (min-width: 1200px) {
+    #subtitleArea { padding: 16px 20%; }
+    #historyArea { padding: 8px 20% 16px; }
+  }
+
+  /* ===== Wake Lock hint ===== */
+  #wakeLockHint {
+    position: fixed; bottom: 4px; left: 0; right: 0;
+    text-align: center; font-size: 10px;
+    color: rgba(255,255,255,0.15);
+  }
+</style>
+</head>
+<body>
+
+<div id="statusBar">
+  <div id="statusDot"></div>
+  <span id="statusText">正在连接...</span>
+  <span id="ipDisplay"></span>
+</div>
+
+<div id="subtitleArea">
+  <div id="currentSubtitle">等待语音输入...</div>
+</div>
+
+<div id="historyArea"></div>
+
+<div id="errorBanner"></div>
+<div id="wakeLockHint">屏幕常亮已启用</div>
+
+<script>
+(function() {
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const ipDisplay = document.getElementById('ipDisplay');
+  const currentSubtitle = document.getElementById('currentSubtitle');
+  const historyArea = document.getElementById('historyArea');
+  const errorBanner = document.getElementById('errorBanner');
+
+  var ws = null;
+  var retryCount = 0;
+  var maxRetries = 30;
+  var serverIp = window.location.hostname || '192.168.1.100';
+  var serverPort = parseInt(window.location.port) || 8765;
+  var subtitleTimer = null;
+  var latestPartial = '';
+  var wakeLock = null;
+
+  ipDisplay.textContent = serverIp + ':' + serverPort;
+
+  function connect() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+
+    var url = 'ws://' + serverIp + ':' + serverPort;
+    ws = new WebSocket(url);
+
+    ws.onopen = function() {
+      retryCount = 0;
+      setConnected(true);
+      statusText.textContent = '已连接';
+      hideError();
+      console.log('[WS] Connected to ' + url);
+    };
+
+    ws.onmessage = function(event) {
+      try {
+        var msg = JSON.parse(event.data);
+        handleMessage(msg);
+      } catch (e) {
+        console.warn('[WS] Invalid JSON:', event.data);
+      }
+    };
+
+    ws.onclose = function(e) {
+      setConnected(false);
+      statusText.textContent = '连接已断开';
+      console.log('[WS] Closed: code=' + e.code);
+      scheduleReconnect();
+    };
+
+    ws.onerror = function(e) {
+      setConnected(false);
+      statusText.textContent = '连接失败';
+      showError('未连接到手机，请确保手机 App 正在运行');
+      console.error('[WS] Error');
+    };
+  }
+
+  function scheduleReconnect() {
+    if (retryCount >= maxRetries) {
+      statusText.textContent = '重试已达上限';
+      showError('无法连接到手机，请检查手机 App 是否正在运行');
+      return;
+    }
+    retryCount++;
+    statusText.textContent = '重试连接 (' + retryCount + '/' + maxRetries + ')...';
+    setTimeout(connect, 3000);
+  }
+
+  function handleMessage(msg) {
+    switch (msg.type) {
+      case 'heartbeat':
+        break;
+
+      case 'partial':
+        latestPartial = msg.text;
+        currentSubtitle.textContent = msg.text;
+        currentSubtitle.className = 'show partial';
+        if (subtitleTimer) clearTimeout(subtitleTimer);
+        subtitleTimer = setTimeout(function() {
+          if (currentSubtitle.className === 'show partial') {
+            currentSubtitle.className = '';
+          }
+        }, 800);
+        break;
+
+      case 'final':
+        latestPartial = '';
+        if (subtitleTimer) clearTimeout(subtitleTimer);
+        currentSubtitle.textContent = msg.text;
+        currentSubtitle.className = 'show final';
+        addHistory(msg.text);
+        setTimeout(function() {
+          currentSubtitle.className = '';
+        }, 3000);
+        break;
+
+      case 'history':
+        if (msg.results && msg.results.length > 0) {
+          msg.results.slice().reverse().forEach(function(r) {
+            addHistory(r.text);
+          });
+        }
+        break;
+
+      case 'status':
+        break;
+
+      case 'vad':
+        if (msg.state === 'silence' && latestPartial) {
+          latestPartial = '';
+        }
+        break;
+    }
+  }
+
+  function addHistory(text) {
+    if (!text || text.trim().length === 0) return;
+    var line = document.createElement('div');
+    line.className = 'historyLine';
+    line.textContent = text;
+    historyArea.insertBefore(line, historyArea.firstChild);
+    while (historyArea.children.length > 10) {
+      historyArea.removeChild(historyArea.lastChild);
+    }
+  }
+
+  function setConnected(on) {
+    if (on) {
+      statusDot.className = 'connected';
+      hideError();
+    } else {
+      statusDot.className = '';
+    }
+  }
+
+  function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.className = 'show';
+  }
+
+  function hideError() {
+    errorBanner.className = '';
+  }
+
+  function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        navigator.wakeLock.request('screen').then(function(lock) {
+          wakeLock = lock;
+          console.log('[WakeLock] Screen wake lock acquired');
+          lock.addEventListener('release', function() {
+            console.log('[WakeLock] Screen wake lock released');
+          });
+        }).catch(function(err) {
+          console.warn('[WakeLock] Failed:', err);
+        });
+      } catch (e) {
+        console.warn('[WakeLock] Not supported');
+      }
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) {
+      wakeLock.release().then(function() {
+        wakeLock = null;
+        console.log('[WakeLock] Released');
+      });
+    }
+  }
+
+  // Re-acquire wake lock when visibility changes
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      requestWakeLock();
+    }
+  });
+
+  // Initialize
+  requestWakeLock();
+  connect();
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', function() {
+    if (ws) ws.close();
+    releaseWakeLock();
+  });
+})();
+</script>
+
+</body>
+</html>

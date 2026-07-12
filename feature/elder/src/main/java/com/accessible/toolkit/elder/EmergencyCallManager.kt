@@ -1,76 +1,100 @@
 package com.accessible.toolkit.elder
 
-import android.app.AlarmManager
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
+import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.util.Log
-import androidx.core.app.NotificationCompat
-import com.accessible.toolkit.voice.TtsManager
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.ContactsContract
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class EmergencyCallManager(private val context: Context) {
 
     companion object {
-        private const val TAG = "EmergencyCallManager"
-        private const val CHANNEL_ID = "emergency_channel"
-        private const val NOTIFICATION_ID = 2001
+        private const val CONTACT_PICKER_REQUEST = 1001
+        private const val PERMISSION_REQUEST_CONTACTS = 1002
     }
 
-    private var phoneNumber: String? = null
+    private val reminder = MedicationReminder(context)
 
-    val get: String?
-        get() = phoneNumber
-
-    init {
-        createNotificationChannel()
+    fun getEmergencyContacts(): List<MedicationReminder.EmergencyContact> {
+        return reminder.getEmergencyContacts()
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "紧急呼叫",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "紧急呼叫提醒通知"
+    fun startContactPicker(activity: Activity) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.READ_CONTACTS),
+                PERMISSION_REQUEST_CONTACTS
+            )
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI)
+        activity.startActivityForResult(intent, CONTACT_PICKER_REQUEST)
+    }
+
+    fun handleContactPickerResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode != CONTACT_PICKER_REQUEST || resultCode != Activity.RESULT_OK || data == null) {
+            return
+        }
+
+        val contactUri = data.data ?: return
+        val cursor = context.contentResolver.query(contactUri, null, null, null, null) ?: return
+
+        cursor.use {
+            if (it.moveToFirst()) {
+                val nameIndex = it.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+                val idIndex = it.getColumnIndex(ContactsContract.Contacts._ID)
+                val name = if (nameIndex >= 0) it.getString(nameIndex) else "未知"
+                val contactId = if (idIndex >= 0) it.getString(idIndex) else ""
+
+                // Get phone number
+                val phoneCursor = context.contentResolver.query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                    "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                    arrayOf(contactId),
+                    null
+                )
+
+                phoneCursor?.use { pc ->
+                    if (pc.moveToFirst()) {
+                        val numberIndex = pc.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                        val number = if (numberIndex >= 0) pc.getString(numberIndex) else ""
+
+                        if (number.isNotBlank()) {
+                            val contact = MedicationReminder.EmergencyContact(
+                                name = name,
+                                phoneNumber = number.replace("\\s".toRegex(), "")
+                            )
+                            reminder.addEmergencyContact(contact)
+                        }
+                    }
+                }
             }
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
         }
     }
 
-    fun setPhoneNumber(number: String) {
-        this.phoneNumber = number
+    fun removeEmergencyContact(id: String) {
+        reminder.removeEmergencyContact(id)
     }
 
-    fun makeEmergencyCall() {
-        val number = phoneNumber ?: return
-
+    fun makeEmergencyCall(phoneNumber: String) {
+        val intent = Intent(Intent.ACTION_CALL).apply {
+            data = Uri.parse("tel:$phoneNumber")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
         try {
-            val intent = Intent(Intent.ACTION_CALL).apply {
-                data = android.net.Uri.parse("tel:$number")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
             context.startActivity(intent)
         } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to make emergency call", e)
+            Toast.makeText(context, "需要电话权限才能拨打电话", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    fun showEmergencyNotification(message: String) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("紧急提醒")
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .build()
-
-        notificationManager.notify(NOTIFICATION_ID, notification)
     }
 }

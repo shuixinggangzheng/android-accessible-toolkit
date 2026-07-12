@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/elder_background">
+
+    <!-- 普通模式 -->
+    <LinearLayout
+        android:id="@+id/layout_normal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="@dimen/elder_padding_large">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="@dimen/elder_padding_medium">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="文字转语音"
+                android:textSize="@dimen/elder_text_size_title"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:contentDescription="文字转语音功能标题" />
+
+            <Button
+                android:id="@+id/btn_dialogue_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/elder_button_height"
+                android:text="对话模式"
+                android:textSize="@dimen/elder_text_size_body"
+                android:backgroundTint="@color/elder_primary"
+                android:textColor="@color/elder_on_primary"
+                android:minHeight="@dimen/elder_min_touch_target"
+                android:contentDescription="点击切换到对话模式" />
+
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/et_input"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:hint="在这里输入你想说的话"
+            android:gravity="top|start"
+            android:padding="@dimen/elder_padding_large"
+            android:background="@drawable/bg_card_light"
+            android:textSize="@dimen/elder_text_size_body"
+            android:inputType="textMultiLine"
+            android:layout_marginBottom="@dimen/elder_padding_medium"
+            android:contentDescription="文本输入框，请输入您想播报的文字" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="@dimen/elder_padding_large">
+
+            <LinearLayout
+                android:id="@+id/layout_phrases"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/elder_padding_large">
+
+            <ImageButton
+                android:id="@+id/btn_speak"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_circle_green"
+                android:src="@android:drawable/ic_btn_speak_now"
+                android:scaleType="centerInside"
+                android:padding="@dimen/elder_padding_large"
+                android:contentDescription="点击播报文字内容"
+                android:elevation="@dimen/elder_elevation" />
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_light"
+            android:padding="@dimen/elder_padding_medium">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="语速"
+                    android:textSize="@dimen/elder_text_size_caption"
+                    android:textColor="@color/elder_text_primary"
+                    android:layout_marginEnd="@dimen/elder_padding_medium"
+                    android:contentDescription="语速调节标签" />
+
+                <SeekBar
+                    android:id="@+id/seekbar_speed"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="50"
+                    android:minHeight="@dimen/elder_min_touch_target"
+                    android:contentDescription="调节语速" />
+
+                <TextView
+                    android:id="@+id/tv_speed_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="1.0x"
+                    android:textSize="@dimen/elder_text_size_caption"
+                    android:textColor="@color/elder_text_primary"
+                    android:gravity="center"
+                    android:contentDescription="当前语速值" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="@dimen/elder_padding_medium">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="音调"
+                    android:textSize="@dimen/elder_text_size_caption"
+                    android:textColor="@color/elder_text_primary"
+                    android:layout_marginEnd="@dimen/elder_padding_large"
+                    android:contentDescription="音调调节标签" />
+
+                <SeekBar
+                    android:id="@+id/seekbar_pitch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="50"
+                    android:minHeight="@dimen/elder_min_touch_target"
+                    android:contentDescription="调节音调" />
+
+                <TextView
+                    android:id="@+id/tv_pitch_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="1.0"
+                    android:textSize="@dimen/elder_text_size_caption"
+                    android:textColor="@color/elder_text_primary"
+                    android:gravity="center"
+                    android:contentDescription="当前音调值" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 对话模式 -->
+    <LinearLayout
+        android:id="@+id/layout_dialogue"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="@dimen/elder_padding_large"
+        android:visibility="gone"
+        android:background="@color/elder_background">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="@dimen/elder_padding_medium">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="对话模式"
+                android:textSize="@dimen/elder_text_size_title"
+                android:textStyle="bold"
+                android:textColor="@color/elder_text_primary"
+                android:contentDescription="对话模式标题" />
+
+            <Button
+                android:id="@+id/btn_exit_dialogue"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/elder_button_height"
+                android:text="退出对话"
+                android:textSize="@dimen/elder_text_size_body"
+                android:backgroundTint="@color/elder_error"
+                android:textColor="@color/elder_on_error"
+                android:minHeight="@dimen/elder_min_touch_target"
+                android:contentDescription="点击退出对话模式" />
+
+        </LinearLayout>
+
+        <!-- 上半部：对方语音 ASR 字幕（40%） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="4"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_light"
+            android:padding="@dimen/elder_padding_medium"
+            android:layout_marginBottom="@dimen/elder_padding_small">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="对方说（语音识别）"
+                android:textSize="@dimen/elder_text_size_caption"
+                android:textColor="@color/elder_text_secondary"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/elder_padding_medium"
+                android:contentDescription="对方语音识别区域标题" />
+
+            <ScrollView
+                android:id="@+id/scroll_asr"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="@color/elder_card_background"
+                android:padding="@dimen/elder_padding_medium">
+
+                <TextView
+                    android:id="@+id/tv_asr_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="等待对方说话..."
+                    android:textSize="@dimen/elder_text_size_body"
+                    android:textColor="@color/elder_text_primary"
+                    android:lineSpacingExtra="@dimen/elder_padding_small"
+                    android:contentDescription="语音识别结果显示区域" />
+
+            </ScrollView>
+
+            <TextView
+                android:id="@+id/tv_voice_active"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="对方正在说话..."
+                android:textSize="@dimen/elder_text_size_caption"
+                android:textColor="@color/elder_primary"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/elder_padding_small"
+                android:visibility="gone"
+                android:contentDescription="对方正在说话提示" />
+
+        </LinearLayout>
+
+        <!-- 分割线 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginVertical="@dimen/elder_padding_small">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⬆⬇"
+                android:textSize="@dimen/elder_text_size_body"
+                android:textColor="@color/elder_text_hint"
+                android:contentDescription="分隔线" />
+
+        </LinearLayout>
+
+        <!-- 下半部：你的输入 + 播报（40%） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="4"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_light"
+            android:padding="@dimen/elder_padding_medium"
+            android:layout_marginTop="@dimen/elder_padding_small">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="你说（文字转语音）"
+                android:textSize="@dimen/elder_text_size_caption"
+                android:textColor="@color/elder_text_secondary"
+                android:textStyle="bold"
+                android:layout_marginBottom="@dimen/elder_padding_medium"
+                android:contentDescription="文字转语音输入区域标题" />
+
+            <EditText
+                android:id="@+id/et_dialogue_input"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:hint="输入你想说的话"
+                android:gravity="top|start"
+                android:padding="@dimen/elder_padding_medium"
+                android:background="@color/elder_card_background"
+                android:textSize="@dimen/elder_text_size_body"
+                android:textColor="@color/elder_text_primary"
+                android:inputType="textMultiLine"
+                android:contentDescription="请输入您想播报的文字" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginTop="@dimen/elder_padding_medium">
+
+                <LinearLayout
+                    android:id="@+id/layout_dialogue_phrases"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+
+            </HorizontalScrollView>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/elder_padding_medium">
+
+                <ImageButton
+                    android:id="@+id/btn_dialogue_speak"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_circle_green"
+                    android:src="@android:drawable/ic_btn_speak_now"
+                    android:scaleType="centerInside"
+                    android:padding="@dimen/elder_padding_large"
+                    android:contentDescription="点击播报文字内容"
+                    android:elevation="@dimen/elder_elevation" />
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

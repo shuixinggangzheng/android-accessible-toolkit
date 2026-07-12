@@ -35,7 +35,10 @@ android {
 
 dependencies {
     implementation(project(":core:engine"))
+    implementation(project(":core:vosk"))
+    implementation(project(":core:vad"))
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("org.java-websocket:Java-WebSocket:1.5.4")
+    implementation("org.java-websocket:Java-WebSocket:1.5.6")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("org.nanohttpd:nanohttpd:2.3.1")
 }

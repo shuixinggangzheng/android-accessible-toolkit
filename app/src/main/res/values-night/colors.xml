@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Elder-friendly high contrast colors - Dark Mode -->
+    <color name="elder_primary">#42A5F5</color>
+    <color name="elder_primary_dark">#1565C0</color>
+    <color name="elder_primary_light">#90CAF9</color>
+    <color name="elder_on_primary">#000000</color>
+
+    <color name="elder_background">#000000</color>
+    <color name="elder_surface">#1A1A1A</color>
+    <color name="elder_error">#EF5350</color>
+
+    <color name="elder_on_background">#FFFFFF</color>
+    <color name="elder_on_surface">#FFFFFF</color>
+    <color name="elder_on_error">#000000</color>
+
+    <color name="elder_text_primary">#FFFFFF</color>
+    <color name="elder_text_secondary">#E0E0E0</color>
+    <color name="elder_text_hint">#BDBDBD</color>
+
+    <color name="elder_divider">#424242</color>
+    <color name="elder_border">#FFFFFF</color>
+
+    <color name="elder_button_background">#42A5F5</color>
+    <color name="elder_button_text">#000000</color>
+
+    <color name="elder_card_background">#1A1A1A</color>
+    <color name="elder_card_border">#FFFFFF</color>
+</resources>

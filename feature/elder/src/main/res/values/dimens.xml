@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Elder-friendly Text Sizes (40% larger than Material Design) -->
+    <dimen name="elder_text_size_title">28sp</dimen>
+    <dimen name="elder_text_size_body">22sp</dimen>
+    <dimen name="elder_text_size_caption">18sp</dimen>
+
+    <!-- Elder-friendly Touch Targets (exceeds 48dp Android standard) -->
+    <dimen name="elder_min_touch_target">56dp</dimen>
+    <dimen name="elder_button_height">64dp</dimen>
+
+    <!-- Elder-friendly Spacing -->
+    <dimen name="elder_padding_small">8dp</dimen>
+    <dimen name="elder_padding_medium">16dp</dimen>
+    <dimen name="elder_padding_large">24dp</dimen>
+    <dimen name="elder_padding_xlarge">32dp</dimen>
+
+    <!-- Elder-friendly Corner Radius -->
+    <dimen name="elder_corner_radius">8dp</dimen>
+    <dimen name="elder_corner_radius_large">12dp</dimen>
+
+    <!-- Elder-friendly Elevation -->
+    <dimen name="elder_elevation">4dp</dimen>
+
+    <!-- Elder-friendly Border Width -->
+    <dimen name="elder_border_width">2dp</dimen>
+</resources>

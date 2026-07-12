@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.accessible.toolkit.engine.VadCallback
 import com.accessible.toolkit.engine.VadDetector
+import java.util.concurrent.atomic.AtomicBoolean
 
 class EnergyBasedVadDetector(
     private val androidContext: android.content.Context,
@@ -25,13 +26,13 @@ class EnergyBasedVadDetector(
 
     private var audioRecord: AudioRecord? = null
     private var callback: VadCallback? = null
-    private var running = false
+    private val running = AtomicBoolean(false)
     private var isVoiceActive = false
     private var lastVoiceTime = 0L
     private var recordingThread: Thread? = null
 
     override fun start() {
-        if (running) return
+        if (running.get()) return
 
         if (ContextCompat.checkSelfPermission(androidContext, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
@@ -56,7 +57,7 @@ class EnergyBasedVadDetector(
             )
 
             audioRecord?.startRecording()
-            running = true
+            running.set(true)
             lastVoiceTime = System.currentTimeMillis()
 
             recordingThread = Thread { processAudio() }.apply {
@@ -70,13 +71,11 @@ class EnergyBasedVadDetector(
     private fun processAudio() {
         val buffer = ShortArray(FRAME_SIZE)
 
-        while (running) {
+        while (running.get()) {
             val readSize = audioRecord?.read(buffer, 0, FRAME_SIZE) ?: 0
             if (readSize > 0) {
                 val energy = calculateEnergy(buffer, readSize)
                 val zeroCrossings = calculateZeroCrossings(buffer, readSize)
-
-                callback?.onVoiceEnergy(energy)
 
                 val isVoice = energy > ENERGY_THRESHOLD && zeroCrossings > ZERO_CROSSING_THRESHOLD
 
@@ -120,7 +119,7 @@ class EnergyBasedVadDetector(
     }
 
     override fun stop() {
-        running = false
+        running.set(false)
         recordingThread?.join(1000)
         recordingThread = null
         audioRecord?.stop()
@@ -132,7 +131,7 @@ class EnergyBasedVadDetector(
         this.callback = callback
     }
 
-    override fun isRunning(): Boolean = running
+    override fun isRunning(): Boolean = running.get()
 
     override fun destroy() {
         stop()

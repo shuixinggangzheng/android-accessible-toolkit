@@ -119,7 +119,7 @@ class VoiceAssistActivity : AppCompatActivity() {
 
         seekBarSpeed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val speed = 0.5f + (progress / 100f)
+                val speed = 0.5f + (progress * 1.5f / 100f)
                 tvSpeedValue.text = String.format("%.1fx", speed)
                 if (fromUser) {
                     ttsService?.setSpeechRate(speed)
@@ -131,7 +131,7 @@ class VoiceAssistActivity : AppCompatActivity() {
 
         seekBarPitch.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val pitch = 0.5f + (progress / 100f)
+                val pitch = 0.5f + (progress * 1.5f / 100f)
                 tvPitchValue.text = String.format("%.1f", pitch)
                 if (fromUser) {
                     ttsService?.setPitch(pitch)
